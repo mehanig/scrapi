@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, String, MetaData
 
-from scrapi.util import flatten
 from scrapi.processing.base import BaseProcessor
 
 
