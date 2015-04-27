@@ -1,12 +1,10 @@
 from __future__ import unicode_literals
 
 from dateutil.parser import parse
-import six
 
 from .helpers import (
     default_name_parser,
     oai_extract_url,
-    # oai_extract_doi,
     oai_process_contributors,
     compose,
     single_result,
@@ -23,6 +21,7 @@ BASEXMLSCHEMA = {
     "uris": {
         "canonicalUri": ('//dcq:identifier-citation/node()', compose(lambda x: x.strip(), single_result)),
     }
+}
 
 
 OAISCHEMA = {

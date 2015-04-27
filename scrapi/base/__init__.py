@@ -31,6 +31,7 @@ class HarvesterMeta(abc.ABCMeta):
         else:
             logger.info('Class {} not added to registry'.format(cls.__name__))
 
+
 @six.add_metaclass(HarvesterMeta)
 class BaseHarvester(object):
     """ This is a base class that all harvesters should inheret from

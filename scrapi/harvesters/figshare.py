@@ -75,7 +75,7 @@ class FigshareHarvester(JSONHarvester):
                     {
                         'doc': json.dumps(record),
                         'source': self.short_name,
-                        'docID': unicode(doc_id),
+                        'docID': (doc_id),
                         'filetype': 'json'
                     }
                 )

@@ -63,10 +63,7 @@ def format_tags(all_tags, sep=','):
                 tags.extend(tag.split(sep))
             else:
                 tags.append(tag)
-    if six.PY2:
-        return list(set([unicode(tag.lower().strip()) for tag in tags if tag.strip()]))
-    else:
-        return list(set([six.u(tag.lower().strip()) for tag in tags if tag.strip()]))
+        return list(set([tag.lower().strip() for tag in tags if tag.strip()]))
 
 
 ###TODO FIX THIS IF ELSE PART.
@@ -74,10 +71,7 @@ def oai_extract_doi(identifiers):
     identifiers = [identifiers] if not isinstance(identifiers, list) else identifiers
     for item in identifiers:
         if 'doi' in item.lower():
-            if six.PY2:
-                return unicode(item.replace('doi:', '').replace('DOI:', '').replace('http://dx.doi.org/', '').strip())
-            else:
-                return six.u(item.replace('doi:', '').replace('DOI:', '').replace('http://dx.doi.org/', '').strip())
+                return (item.replace('doi:', '').replace('DOI:', '').replace('http://dx.doi.org/', '').strip())
     return ''
 
 
