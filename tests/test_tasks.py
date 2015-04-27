@@ -4,6 +4,8 @@ import pytest
 from scrapi import tasks
 from scrapi import settings
 from scrapi.linter import RawDocument
+import six
+
 
 
 settings.USE_FLUENT = False
@@ -25,11 +27,11 @@ def raw_docs():
     return [
         RawDocument({
             'doc': str(x),
-            'docID': unicode(x),
+            'docID': six.u(str(x)),
             'source': u'test',
             'filetype': u'xml',
         })
-        for x in xrange(11)
+        for x in six.moves.range(11)
     ]
 
 
@@ -85,6 +87,7 @@ def test_harvest_days_back(harvester):
     harvester.harvest.assert_called_once_with(days_back=10)
 
 
+#TODO: Bad fix, fix to got e.value as proper string
 @pytest.mark.usefixtures('harvester')
 def test_harvest_raises(harvester):
     harvester.harvest.side_effect = KeyError('testing')
@@ -92,7 +95,7 @@ def test_harvest_raises(harvester):
     with pytest.raises(KeyError) as e:
         tasks.harvest('test', 'TIME')
 
-    assert e.value.message == 'testing'
+    assert str(e.value) == '\'testing\''
 
 
 def test_begin_normalize_starts(raw_docs, monkeypatch):

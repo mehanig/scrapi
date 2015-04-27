@@ -5,19 +5,23 @@ from celery.schedules import crontab
 from scrapi import registry
 from scrapi.base import BaseHarvester
 from scrapi.base import HarvesterMeta
-
+import six
 
 @pytest.fixture
 def mock_registry(monkeypatch):
     return registry
 
 
+import logging, sys
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 class TestHarvesterMeta(object):
 
     def test_meta_records(self, mock_registry):
 
+        @six.add_metaclass(HarvesterMeta)
         class TestClass(object):
-            __metaclass__ = HarvesterMeta
             long_name = 'test'
             short_name = 'test'
             url = 'test'
@@ -33,8 +37,9 @@ class TestHarvesterMeta(object):
             assert(isinstance(val.run_at, dict))
 
     def test_beat_schedule_adds(self, mock_registry):
+
+        @six.add_metaclass(HarvesterMeta)
         class TestClass(object):
-            __metaclass__ = HarvesterMeta
             short_name = 'test'
             run_at = {
                 'hour': 1,
@@ -48,10 +53,12 @@ class TestHarvesterMeta(object):
             'schedule': crontab(**TestClass.run_at),
         }
 
+    #TODO: Bad fix, fix to got e.value as proper string
     def test_raises_key_error(self, mock_registry):
         with pytest.raises(KeyError) as e:
             mock_registry['FabianVF']
-        assert e.value.message == 'No harvester named "FabianVF"'
+        print(type(e.value))
+        assert str(e.value) == '\'No harvester named "FabianVF"\''
 
 
 class TestHarvesterBase(object):
@@ -68,7 +75,7 @@ class TestHarvesterBase(object):
 
             TestHarvester()
 
-        assert e.value.message == self.ERR_MSG.format('short_name')
+        assert str(e.value) == self.ERR_MSG.format('short_name')
 
     def test_requires_long_name(self):
         with pytest.raises(TypeError) as e:
@@ -81,7 +88,7 @@ class TestHarvesterBase(object):
 
             TestHarvester()
 
-        assert e.value.message == self.ERR_MSG.format('long_name')
+        assert str(e.value) == self.ERR_MSG.format('long_name')
 
     def test_requires_url(self):
         with pytest.raises(TypeError) as e:
@@ -94,7 +101,7 @@ class TestHarvesterBase(object):
 
             TestHarvester()
 
-        assert e.value.message == self.ERR_MSG.format('url')
+        assert str(e.value) == self.ERR_MSG.format('url')
 
     def test_requires_file_format(self):
         with pytest.raises(TypeError) as e:
@@ -107,7 +114,7 @@ class TestHarvesterBase(object):
 
             TestHarvester()
 
-        assert e.value.message == self.ERR_MSG.format('file_format')
+        assert str(e.value) == self.ERR_MSG.format('file_format')
 
     def test_requires_harvest(self):
         with pytest.raises(TypeError) as e:
@@ -120,7 +127,7 @@ class TestHarvesterBase(object):
 
             TestHarvester()
 
-        assert e.value.message == self.ERR_MSG.format('harvest')
+        assert str(e.value) == self.ERR_MSG.format('harvest')
 
     def test_requires_normalize(self):
         with pytest.raises(TypeError) as e:
@@ -133,4 +140,4 @@ class TestHarvesterBase(object):
 
             TestHarvester()
 
-        assert e.value.message == self.ERR_MSG.format('normalize')
+        assert str(e.value) == self.ERR_MSG.format('normalize')

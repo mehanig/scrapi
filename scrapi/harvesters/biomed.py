@@ -18,6 +18,7 @@ from nameparser import HumanName
 from scrapi import requests
 from scrapi.base import JSONHarvester
 from scrapi.linter.document import RawDocument
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +92,7 @@ class BiomedHarvester(JSONHarvester):
                     {
                         'doc': json.dumps(record),
                         'source': self.short_name,
-                        'docID': doc_id.decode('utf-8'),
+                        'docID': six.u(doc_id),
                         'filetype': 'json'
                     }
                 )

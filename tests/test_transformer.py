@@ -9,7 +9,7 @@ from scrapi.base.helpers import updated_schema, pack
 
 from .utils import get_leaves
 from .utils import TEST_SCHEMA, TEST_NAMESPACES, TEST_XML_DOC
-
+import six
 
 class TestHarvester(XMLHarvester):
     long_name = 'TEST'
@@ -24,7 +24,7 @@ class TestHarvester(XMLHarvester):
             'source': 'crossref',
             'filetype': 'XML',
             'docID': "1"
-        }) for _ in xrange(days_back)]
+        }) for _ in six.moves.range(days_back)]
 
 
 class TestTransformer(object):

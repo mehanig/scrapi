@@ -8,6 +8,7 @@ Example query: https://cn.dataone.org/cn/v1/query/solr/?q=dateModified:[NOW-5DAY
 from __future__ import unicode_literals
 
 import re
+import six
 
 import logging
 from datetime import datetime
@@ -24,6 +25,7 @@ from scrapi.base import XMLHarvester
 from scrapi.util import copy_to_unicode
 from scrapi.linter.document import RawDocument
 from scrapi.base.helpers import compose, single_result
+
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +84,7 @@ def process_contributors(author, submitters, contributors):
                 'givenName': name.first,
                 'additionalName': name.middle,
                 'familyName': name.last,
-                'email': unicode(email)
+                'email': six.u(email)
             }
             contributor_list.append(contributor_dict)
         else:
@@ -149,7 +151,7 @@ class DataOneHarvester(XMLHarvester):
             'canonicalUri': ("str[@name='id']/node()", "//str[@name='dataUrl']/node()", lambda x, y: y[0] if 'http' in single_result(y) else x[0] if 'http' in single_result(x) else ''),
         },
         'tags': ("//arr[@name='keywords']/str/node()", lambda x: x if isinstance(x, list) else [x]),
-        'providerUpdatedDateTime': ("str[@name='dateModified']/node()", compose(lambda x: parse(x).date().isoformat().decode('utf-8'), single_result)),
+        'providerUpdatedDateTime': ("str[@name='dateModified']/node()", compose(lambda x: parse(x).date().isoformat(), single_result)),
         'title': ("str[@name='title']/node()", single_result),
         'description': ("str[@name='abstract']/node()", single_result)
     }

@@ -5,7 +5,7 @@ import pytz
 
 
 def timestamp():
-    return pytz.utc.localize(datetime.utcnow()).isoformat().decode('utf-8')
+    return six.u(pytz.utc.localize(datetime.utcnow()).isoformat())
 
 
 def copy_to_unicode(element):

@@ -7,6 +7,8 @@ from __future__ import unicode_literals
 
 import json
 
+
+import six
 import pycountry
 from dateutil.parser import parse
 
@@ -66,7 +68,7 @@ class StepicHarvester(JSONHarvester):
                     {
                         'doc': json.dumps(record),
                         'source': self.short_name,
-                        'docID': ('stepic_doc' + str(doc_id)).decode('utf-8'),
+                        'docID': six.u('stepic_doc' + str(doc_id)),
                         'filetype': 'json'
                     }
                 )

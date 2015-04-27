@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from dateutil.parser import parse
+import six
 
 from .helpers import (
     default_name_parser,
@@ -14,7 +15,6 @@ from .helpers import (
 
 CONSTANT = lambda x: lambda *_, **__: x
 
-
 BASEXMLSCHEMA = {
     "description": ('//dc:description/node()', compose(lambda x: x.strip(), single_result)),
     "contributors": ('//dc:creator/node()', compose(default_name_parser, lambda x: x.split(';'), single_result)),
@@ -23,7 +23,7 @@ BASEXMLSCHEMA = {
     "uris": {
         "canonicalUri": ('//dcq:identifier-citation/node()', compose(lambda x: x.strip(), single_result)),
     }
-}
+
 
 OAISCHEMA = {
     "contributors": ('//dc:creator/node()', '//dc:contributor/node()', oai_process_contributors),

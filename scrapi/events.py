@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import logging
 import inspect
+import six
 from functools import wraps
 
 from fluent import event
@@ -38,6 +39,9 @@ def log_to_sentry(message, **kwargs):
 
 
 class Skip(Exception):
+    def __init__(self, _str=None):
+        if str:
+            self.message = _str
     pass
 
 
@@ -52,13 +56,13 @@ def serialize_fluent_data(data):
             serialize_fluent_data(item)
             for item in data
         ]
-    elif isinstance(data, (str, unicode)):
+    elif isinstance(data, six.text_type):
         return data
     else:
         return repr(data)
 
 
-# Ues _index here as to not clutter the namespace for kwargs
+# Use _index here as to not clutter the namespace for kwargs
 def dispatch(_event, status, _index=None, **kwargs):
     if not settings.USE_FLUENTD:
         return
