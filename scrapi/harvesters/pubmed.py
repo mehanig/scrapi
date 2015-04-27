@@ -1,9 +1,9 @@
 """
 Harvester of pubmed for the SHARE notification service
 """
-
-
 from __future__ import unicode_literals
+
+import six
 
 from scrapi.base import schemas
 from scrapi.base import helpers
@@ -16,7 +16,7 @@ def oai_extract_url_pubmed(identifiers):
         try:
             found_url = helpers.URL_REGEX.search(item).group()
             if 'viewcontent' not in found_url and '/pubmed/' in found_url:
-                return found_url.decode('utf-8')
+                return six.u(found_url)
         except AttributeError:
             continue
 

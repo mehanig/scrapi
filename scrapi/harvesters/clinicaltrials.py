@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 import time
 import logging
 import datetime
+import six
 
 from lxml import etree
 
@@ -35,7 +36,7 @@ class ClinicalTrialsHarvester(XMLHarvester):
         "uris": {
             "canonicalUri": "//required_header/url/node()"
         },
-        "providerUpdatedDateTime": ("lastchanged_date/node()", lambda x: unicode(parse(x).replace(tzinfo=None).isoformat())),
+        "providerUpdatedDateTime": ("lastchanged_date/node()", lambda x: six.u(parse(x).replace(tzinfo=None).isoformat())),
         "title": ('//official_title/node()', '//brief_title/node()', lambda x, y: x or y or ''),
         "description": ('//brief_summary/textblock/node()', '//brief_summary/textblock/node()', lambda x, y: x or y or ''),
         # "otherProperties": {
@@ -81,10 +82,12 @@ class ClinicalTrialsHarvester(XMLHarvester):
     def copy_to_unicode(self, element):
         encoding = self.record_encoding or self.DEFAULT_ENCODING
         element = ''.join(element)
-        if isinstance(element, unicode):
+        if isinstance(element, six.string_types):
             return element
         else:
-            return unicode(element, encoding=encoding)
+            # Again strange things here
+            # return unicode(element, encoding=encoding)
+            return six.u(element)
 
     def harvest(self, days_back=1):
         """ First, get a list of all recently updated study urls,

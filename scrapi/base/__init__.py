@@ -15,6 +15,7 @@ from scrapi.base.schemas import OAISCHEMA
 # from scrapi.base.helpers import updated_schema
 from scrapi.linter.document import RawDocument, NormalizedDocument
 from scrapi.base.transformer import XMLTransformer, JSONTransformer
+import six
 
 logging.basicConfig(level=logging.INFO)
 
@@ -29,14 +30,13 @@ class HarvesterMeta(abc.ABCMeta):
         else:
             logger.info('Class {} not added to registry'.format(cls.__name__))
 
-
+@six.add_metaclass(HarvesterMeta)
 class BaseHarvester(object):
     """ This is a base class that all harvesters should inheret from
 
     Defines the copy to unicode method, which is useful for getting standard
     unicode out of xml results.
     """
-    __metaclass__ = HarvesterMeta
 
     @abc.abstractproperty
     def short_name(self):

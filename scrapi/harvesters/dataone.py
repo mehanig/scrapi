@@ -8,6 +8,7 @@ Example query: https://cn.dataone.org/cn/v1/query/solr/?q=dateModified:[NOW-5DAY
 from __future__ import unicode_literals
 
 import re
+import six
 
 import logging
 from datetime import datetime
@@ -22,6 +23,7 @@ from nameparser import HumanName
 from scrapi import requests
 from scrapi.base import XMLHarvester
 from scrapi.linter.document import RawDocument
+
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +78,7 @@ def process_contributors(author, submitters, contributors):
                 'givenName': name.first,
                 'additionalName': name.middle,
                 'familyName': name.last,
-                'email': unicode(email)
+                'email': six.u(email)
             }
             contributor_list.append(contributor_dict)
         else:
@@ -143,7 +145,7 @@ class DataOneHarvester(XMLHarvester):
             'canonicalUri': ("str[@name='id']/node()", "//str[@name='dataUrl']/node()", lambda x, y: y if 'http' in y else x if 'http' in x else ''),
         },
         'tags': ("//arr[@name='keywords']/str/node()", lambda x: x if isinstance(x, list) else [x]),
-        'providerUpdatedDateTime': ("str[@name='dateModified']/node()", lambda x: parse(x).date().isoformat().decode('utf-8')),
+        'providerUpdatedDateTime': ("str[@name='dateModified']/node()", lambda x: six.u(parse(x).date().isoformat())),
         'title': "str[@name='title']/node()",
         'description': "str[@name='abstract']/node()",
     }
@@ -151,10 +153,12 @@ class DataOneHarvester(XMLHarvester):
     def copy_to_unicode(self, element):
         encoding = self.record_encoding or DEFAULT_ENCODING
         element = ''.join(element)
-        if isinstance(element, unicode):
+        if isinstance(element, six.string_types):
             return element
         else:
-            return unicode(element, encoding=encoding)
+            # Again strange things here
+            # return unicode(element, encoding=encoding)
+            return six.u(element)
 
     def harvest(self, days_back=1):
         records = self.get_records(days_back)

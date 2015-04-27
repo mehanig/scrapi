@@ -19,6 +19,7 @@ from requests.structures import CaseInsensitiveDict
 from scrapi import events
 from scrapi import database
 from scrapi import settings
+import six
 
 logger = logging.getLogger(__name__)
 logging.getLogger('cqlengine.cql').setLevel(logging.WARN)
@@ -52,7 +53,7 @@ class HarvesterResponse(cqlengine.Model):
 
     @property
     def text(self):
-        return self.content.decode('utf-8')
+        return six.u(self.content)
 
 
 def _maybe_load_response(method, url):
