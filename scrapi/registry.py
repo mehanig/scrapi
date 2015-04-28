@@ -1,10 +1,12 @@
 import sys
 import six
 
+
 class _Registry(dict):
 
     ###Fix?!
     _py2_ = six.PY2
+
     def __init__(self):
         super(_Registry, self).__init__()
 

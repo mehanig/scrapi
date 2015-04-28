@@ -28,7 +28,7 @@ from dateutil.parser import *
 from scrapi import requests
 from scrapi.base import XMLHarvester
 from scrapi.linter.document import RawDocument
-from scrapi.base.helpers import default_name_parser
+from scrapi.base.helpers import default_name_parser, compose, single_result
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class PlosHarvester(XMLHarvester):
     namespaces = {}
 
     MAX_ROWS_PER_REQUEST = 999
-    BASE_URL = 'http://api.plos.org/search?q=publication_date:'
+    BASE_URL = 'http://api.plos.org/search'
 
     def build_query(self, days_back):
         to_date = datetime.utcnow()
@@ -55,6 +55,7 @@ class PlosHarvester(XMLHarvester):
 
         to_date = to_date.replace(hour=0, minute=0, second=0, microsecond=0)
         from_date = from_date.replace(hour=0, minute=0, second=0, microsecond=0)
+
         return 'publication_date:[{}Z TO {}Z]'.format(from_date.isoformat(), to_date.isoformat())
 
     def fetch_rows(self, days_back):
@@ -66,7 +67,8 @@ class PlosHarvester(XMLHarvester):
             'api_key': PLOS_API_KEY,
         })
 
-        total_rows = int(etree.XML(resp.content).xpath('//result/@numFound')[0])
+        total_rows = etree.XML(resp.content).xpath('//result/@numFound')
+        total_rows = int(total_rows[0]) if total_rows else 0
 
         current_row = 0
         while current_row < total_rows:
@@ -82,7 +84,7 @@ class PlosHarvester(XMLHarvester):
 
             current_row += self.MAX_ROWS_PER_REQUEST
 
-    def harvest(self, days_back=3):
+    def harvest(self, days_back=1):
         if not PLOS_API_KEY:
             return []
 
@@ -99,22 +101,14 @@ class PlosHarvester(XMLHarvester):
             or row.xpath("str[@name='author_display']")
         ]
 
-    def copy_to_unicode(self, element):
-
-        element = ''.join(element)
-        if isinstance(element, unicode):
-            return element
-        else:
-            return unicode(element, encoding=DEFAULT_ENCODING)
-
     schema = {
         'uris': {
-            'canonicalUri': ('//str[@name="id"]/node()', lambda x: 'http://dx.doi.org/{}'.format(x)),
+            'canonicalUri': ('//str[@name="id"]/node()', compose('http://dx.doi.org/{}'.format, single_result)),
         },
         'contributors': ('//arr[@name="author_display"]/str/node()', default_name_parser),
-        'providerUpdatedDateTime': ('//date[@name="publication_data"]/node()', lambda x: six.u(parse(x).date().isoformat())),
-        'title': '//str[@name="title_display"]/node()',
-        'description': '//arr[@name="abstract"]/str/node()',
+        'providerUpdatedDateTime': ('//date[@name="publication_data"]/node()', compose(lambda x: parse(x).date().isoformat(), single_result)),
+        'title': ('//str[@name="title_display"]/node()', single_result),
+        'description': ('//arr[@name="abstract"]/str/node()', single_result),
         # 'otherProperties': {
         #     'journal': '//str[@name="journal"]/node()',
         #     'eissn': '//str[@name="eissn"]/node()',

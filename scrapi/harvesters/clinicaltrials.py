@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 import time
 import logging
 import datetime
-import six
 
 from lxml import etree
 
@@ -16,8 +15,10 @@ from dateutil.parser import *
 
 from scrapi import requests
 from scrapi.base import XMLHarvester
+from scrapi.util import copy_to_unicode
 from scrapi.linter.document import RawDocument
 from scrapi.base.schemas import default_name_parser
+from scrapi.base.helpers import compose, single_result
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +33,13 @@ class ClinicalTrialsHarvester(XMLHarvester):
     record_encoding = None
 
     schema = {
-        "contributors": ('//overall_official/last_name/node()', lambda x: default_name_parser(x) if isinstance(x, list) else default_name_parser([x])),
+        "contributors": ('//overall_official/last_name/node()', default_name_parser),
         "uris": {
-            "canonicalUri": "//required_header/url/node()"
+            "canonicalUri": ("//required_header/url/node()", single_result)
         },
-        "providerUpdatedDateTime": ("lastchanged_date/node()", lambda x: six.u(parse(x).replace(tzinfo=None).isoformat())),
-        "title": ('//official_title/node()', '//brief_title/node()', lambda x, y: x or y or ''),
-        "description": ('//brief_summary/textblock/node()', '//brief_summary/textblock/node()', lambda x, y: x or y or ''),
+        "providerUpdatedDateTime": ("lastchanged_date/node()", compose(lambda x: parse(x).replace(tzinfo=None).isoformat(), single_result)),
+        "title": ('//official_title/node()', '//brief_title/node()', lambda x, y: single_result(x) or single_result(y)),
+        "description": ('//brief_summary/textblock/node()', '//brief_summary/textblock/node()', lambda x, y: single_result(x) or single_result(y)),
         # "otherProperties": {
         #     'oversightAuthority': '//oversight_info/authority/node()',
         #     "serviceID": "//nct_id/node()",
@@ -78,16 +79,6 @@ class ClinicalTrialsHarvester(XMLHarvester):
     @property
     def namespaces(self):
         return None
-
-    def copy_to_unicode(self, element):
-        encoding = self.record_encoding or self.DEFAULT_ENCODING
-        element = ''.join(element)
-        if isinstance(element, six.string_types):
-            return element
-        else:
-            # Again strange things here
-            # return unicode(element, encoding=encoding)
-            return six.u(element)
 
     def harvest(self, days_back=1):
         """ First, get a list of all recently updated study urls,
@@ -145,7 +136,7 @@ class ClinicalTrialsHarvester(XMLHarvester):
                 xml_list.append(RawDocument({
                     'doc': record,
                     'source': self.short_name,
-                    'docID': self.copy_to_unicode(doc_id),
+                    'docID': copy_to_unicode(doc_id),
                     'filetype': 'xml',
                 }))
                 official_count += 1

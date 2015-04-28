@@ -1,37 +1,27 @@
 from __future__ import unicode_literals
 
 from dateutil.parser import parse
-import six
 
 from .helpers import (
     default_name_parser,
     oai_extract_url,
-    # oai_extract_doi,
-    oai_process_contributors
+    oai_process_contributors,
+    compose,
+    single_result,
+    format_tags
 )
 
 CONSTANT = lambda x: lambda *_, **__: x
 
-if six.PY2:
-    BASEXMLSCHEMA = {
-        "description": ('//dc:description/node()', lambda x: (x.strip()).decode('utf-8')),
-        "contributors": ('//dc:creator/node()', lambda x: default_name_parser(x.split(';'))),
-        "title": ('//dc:title/node()', lambda x: six.u(x.strip())),
-        "providerUpdatedDateTime": ('//dc:dateEntry/node()', lambda x: (x.strip()).decode('utf-8')),
-        "uris": {
-            "canonicalUri": ('//dcq:identifier-citation/node()', lambda x: (x.strip()).decode('utf-8')),
-        }
+BASEXMLSCHEMA = {
+    "description": ('//dc:description/node()', compose(lambda x: x.strip(), single_result)),
+    "contributors": ('//dc:creator/node()', compose(default_name_parser, lambda x: x.split(';'), single_result)),
+    "title": ('//dc:title/node()', compose(lambda x: x.strip(), single_result)),
+    "providerUpdatedDateTime": ('//dc:dateEntry/node()', compose(lambda x: x.strip(), single_result)),
+    "uris": {
+        "canonicalUri": ('//dcq:identifier-citation/node()', compose(lambda x: x.strip(), single_result)),
     }
-else:
-    BASEXMLSCHEMA = {
-        "description": ('//dc:description/node()', lambda x: x.strip()),
-        "contributors": ('//dc:creator/node()', lambda x: default_name_parser(x.split(';'))),
-        "title": ('//dc:title/node()', lambda x: x.strip()),
-        "providerUpdatedDateTime": ('//dc:dateEntry/node()', lambda x: x.strip()),
-        "uris": {
-            "canonicalUri": ('//dcq:identifier-citation/node()', lambda x: x.strip()),
-        }
-    }
+}
 
 
 OAISCHEMA = {
@@ -39,7 +29,8 @@ OAISCHEMA = {
     "uris": {
         "canonicalUri": ('//dc:identifier/node()', oai_extract_url)
     },
-    'providerUpdatedDateTime': ('//ns0:header/ns0:datestamp/node()', lambda x: six.u(parse(x).replace(tzinfo=None).isoformat())),
-    'title': ('//dc:title/node()', lambda x: x[0] if isinstance(x, list) else x),
-    'description': ('//dc:description/node()', lambda x: x[0] if isinstance(x, list) else x)
+    'providerUpdatedDateTime': ('//ns0:header/ns0:datestamp/node()', lambda x: parse(x[0]).replace(tzinfo=None).isoformat()),
+    'title': ('//dc:title/node()', single_result),
+    'description': ('//dc:description/node()', single_result),
+    'tags': ('//dc:subject/node()', format_tags)
 }
