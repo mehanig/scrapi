@@ -11,7 +11,6 @@ from lxml import etree
 from scrapi import util
 from scrapi import requests
 from scrapi import registry
-from scrapi import settings
 from scrapi.base.schemas import OAISCHEMA
 # from scrapi.base.helpers import updated_schema
 from scrapi.linter.document import RawDocument, NormalizedDocument
@@ -26,11 +25,10 @@ logger = logging.getLogger(__name__)
 class HarvesterMeta(abc.ABCMeta):
     def __init__(cls, name, bases, dct):
         super(HarvesterMeta, cls).__init__(name, bases, dct)
-        if len(cls.__abstractmethods__) == 0 and cls.short_name not in settings.disabled:
+        if len(cls.__abstractmethods__) == 0:
             registry[cls.short_name] = cls()
         else:
             logger.info('Class {} not added to registry'.format(cls.__name__))
-
 
 @six.add_metaclass(HarvesterMeta)
 class BaseHarvester(object):

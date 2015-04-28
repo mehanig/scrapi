@@ -25,18 +25,12 @@ CASSANDRA_URI = ['127.0.0.1']
 CASSANDRA_KEYSPACE = 'scrapi'
 
 FRONTEND_KEYS = [
-    "uris",
-    "contributors",
-    "providerUpdatedDateTime",
-    "description",
-    "title",
-    "freeToRead",
-    "languages",
-    "licenses",
-    "publisher",
-    "subjects",
-    "tags",
-    "sponsorships",
-    "otherProperties",
-    "shareProperties"
+    u'description',
+    u'contributors',
+    u'tags',
+    u'raw',
+    u'title',
+    u'id',
+    u'source',
+    u'dateUpdated'
 ]

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from scrapi.base.helpers import updated_schema
 from scrapi.base.schemas import BASEXMLSCHEMA
 

@@ -63,7 +63,9 @@ def _maybe_load_response(method, url):
         return None
 
 
-def record_or_load_response(method, url, throttle=None, force=False, params=None, expected=(200,), **kwargs):
+def record_or_load_response(method, url, throttle=None, force=False, params=None, **kwargs):
+    if params:
+        url = furl.furl(url).set(args=params).url
 
     resp = _maybe_load_response(method, url)
 
@@ -98,7 +100,7 @@ def record_or_load_response(method, url, throttle=None, force=False, params=None
     logger.warning('Skipped recorded response from "{}"'.format(url))
 
     return resp.update(
-        ok=(response.ok or response.status_code in expected),
+        ok=response.ok,
         content=response.content,
         encoding=response.encoding,
         status_code=response.status_code,
@@ -106,7 +108,7 @@ def record_or_load_response(method, url, throttle=None, force=False, params=None
     ).save()
 
 
-def request(method, url, params=None, **kwargs):
+def request(method, url, **kwargs):
     """Make a recorded request or get a record matching method and url
 
     :param str method: Get, Put, Post, or Delete
@@ -115,14 +117,11 @@ def request(method, url, params=None, **kwargs):
     :param int throttle: A time in seconds to sleep before making requests
     :param dict kwargs: Addition keywords to pass to requests
     """
-    if params:
-        url = furl.furl(url).set(args=params).url
-    logger.info(url)
     if settings.RECORD_HTTP_TRANSACTIONS:
         return record_or_load_response(method, url, **kwargs)
 
     logger.info('Making request to "{}"'.format(url))
-    time.sleep(kwargs.pop('throttle', 0))
+    kwargs.pop('throttle', '')
     return requests.request(method, url, **kwargs)
 
 

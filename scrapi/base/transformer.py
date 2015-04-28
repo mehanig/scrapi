@@ -72,7 +72,8 @@ class BaseTransformer(object):
 class XMLTransformer(BaseTransformer):
 
     def _transform_string(self, string, doc):
-        return doc.xpath(string, namespaces=self.namespaces)
+        val = doc.xpath(string, namespaces=self.namespaces)
+        return six.u(val[0]) if len(val) == 1 else [six.u(v) for v in val] or ''
 
     @abc.abstractproperty
     def namespaces(self):

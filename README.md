@@ -3,7 +3,6 @@ scrapi
 
 [![Build Status](https://travis-ci.org/fabianvf/scrapi.svg?branch=develop)](https://travis-ci.org/fabianvf/scrapi)
 [![Coverage Status](https://coveralls.io/repos/fabianvf/scrapi/badge.svg?branch=develop)](https://coveralls.io/r/fabianvf/scrapi?branch=develop)
-[![Code Climate](https://codeclimate.com/github/fabianvf/scrapi/badges/gpa.svg)](https://codeclimate.com/github/fabianvf/scrapi)
 
 ## Getting started
 
@@ -13,27 +12,23 @@ scrapi
     - Install Cassandra
     - Install harvesters
     - Install rabbitmq (optional)
+    - 
 - To only run harvesters locally, you do not have to install rabbitmq
 
 
 ### Requirements
 
-- Create and enter virtual environment for scrapi, and go to the top level project directory. From there, run
+- Create and enter virtual environment for scrapi, and go to the top level project directory. From there, run 
 
 ```bash
 $ pip install -r requirements.txt
 ```
-Or, if you'd like some nicer testing and debugging utilities in addition to the core requirements, run
-```bash
-$ pip install -r dev-requirements.txt
-```
 
-This will also install the core requirements like normal.
+and the python requirements for the project will download and install.
+
 
 ### Installing Cassandra and Elasticsearch
 _note: JDK 7 must be installed for Cassandra and Elasticsearch to run_
-
-_note: As long as you don't specify Cassandra or Elasticsearch and set RECORD_HTTP_TRANSACTIONS to ```False``` in your local.py, you shouldn't need to have them installed to get at least basic functionality working_
 
 #### Mac OSX
 
@@ -81,7 +76,7 @@ $ brew install elasticsearch
    ```bash
    $ sudo apt-get update
    $ sudo apt-get install elasticsearch
-```
+   ```
 
 
 __Now, just run__
@@ -113,37 +108,13 @@ $ sudo apt-get install rabbitmq-server
 ```
 ### Settings
 
-You will need to have a local copy of the settings. Copy local-dist.py into your own version of local.py -
+You will need to have a local copy of the settings
 
 ```
 cp scrapi/settings/local-dist.py scrapi/settings/local.py
 ```
-
-If you installed Cassandra and Elasticsearch earlier, you will want add the following configuration to your local.py:
-```python
-RECORD_HTTP_TRANSACTIONS = True  # Only if cassandra is installed
-
-NORMALIZED_PROCESSING = ['cassandra', 'elasticsearch']
-RAW_PROCESSING = ['cassandra']
-```
-Otherwise, you will want to make sure your local.py has the following configuration:
-```python
-RECORD_HTTP_TRANSACTIONS = False
-
-NORMALIZED_PROCESSING = ['storage']
-RAW_PROCESSING = ['storage']
-```
-This will save all harvested/normalized files to the directory ```archive/<source>/<document identifier>```
-
-_note: Be careful with this, as if you harvest too many documents with the storage module enabled, you could start experiencing inode errors_
-
-If you'd like to be able to run all harvesters, you'll need to [register for a PLOS API key](http://api.plos.org/registration/).
-
-Add the following line to your local.py file:
-```
-PLOS_API_KEY = 'your-api-key-here'
-```
-
+ 
+(Note: only needed if NOT running locally!)
 ### Running the scheduler (optional)
 
 - from the top-level project directory run:
@@ -152,7 +123,7 @@ PLOS_API_KEY = 'your-api-key-here'
 $ invoke beat
 ```
 
-to start the scheduler, and
+to start the scheduler, and 
 
 ```bash
 $ invoke worker
@@ -162,19 +133,17 @@ to start the worker.
 
 
 ### Harvesters
-Run all harvesters with
+Run all harvesters with 
 
 ```bash
 $ invoke harvesters
 ```
 
-or, just one with
+or, just one with 
 
 ```bash
 $ invoke harvester harvester-name
 ```
-
-Note: harvester-name is the same as the defined harvester "short name".
 
 Invove a harvester a certain number of days back with the ```--days``` argument. For example, to run a harvester 5 days in the past, run:
 
@@ -186,8 +155,8 @@ $ invoke harvester harvester-name --days=5
 
 - To run the tests for the project, just type
 
-```bash
+```bash 
 $ invoke test
 ```
 
-and all of the tests in the 'tests/' directory will be run.
+and all of the tests in the 'tests/' directory will be run. 

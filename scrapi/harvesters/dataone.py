@@ -22,9 +22,7 @@ from nameparser import HumanName
 
 from scrapi import requests
 from scrapi.base import XMLHarvester
-from scrapi.util import copy_to_unicode
 from scrapi.linter.document import RawDocument
-from scrapi.base.helpers import compose, single_result
 
 
 logger = logging.getLogger(__name__)
@@ -47,10 +45,6 @@ def process_doi(service_id, doc_doi):
 
 
 def process_contributors(author, submitters, contributors):
-    if not author:
-        author = ''
-    elif isinstance(author, list):
-        author = author[0]
     if not isinstance(contributors, list):
         contributors = [contributors]
     unique_contributors = list(set([author] + contributors))
@@ -148,13 +142,23 @@ class DataOneHarvester(XMLHarvester):
         # },
         'contributors': ("str[@name='author']/node()", "str[@name='submitter']/node()", "arr[@name='origin']/str/node()", process_contributors),
         'uris': {
-            'canonicalUri': ("str[@name='id']/node()", "//str[@name='dataUrl']/node()", lambda x, y: y[0] if 'http' in single_result(y) else x[0] if 'http' in single_result(x) else ''),
+            'canonicalUri': ("str[@name='id']/node()", "//str[@name='dataUrl']/node()", lambda x, y: y if 'http' in y else x if 'http' in x else ''),
         },
         'tags': ("//arr[@name='keywords']/str/node()", lambda x: x if isinstance(x, list) else [x]),
-        'providerUpdatedDateTime': ("str[@name='dateModified']/node()", compose(lambda x: parse(x).date().isoformat(), single_result)),
-        'title': ("str[@name='title']/node()", single_result),
-        'description': ("str[@name='abstract']/node()", single_result)
+        'providerUpdatedDateTime': ("str[@name='dateModified']/node()", lambda x: six.u(parse(x).date().isoformat())),
+        'title': "str[@name='title']/node()",
+        'description': "str[@name='abstract']/node()",
     }
+
+    def copy_to_unicode(self, element):
+        encoding = self.record_encoding or DEFAULT_ENCODING
+        element = ''.join(element)
+        if isinstance(element, six.string_types):
+            return element
+        else:
+            # Again strange things here
+            # return unicode(element, encoding=encoding)
+            return six.u(element)
 
     def harvest(self, days_back=1):
         records = self.get_records(days_back)
@@ -166,7 +170,7 @@ class DataOneHarvester(XMLHarvester):
             xml_list.append(RawDocument({
                 'doc': record,
                 'source': self.short_name,
-                'docID': copy_to_unicode(doc_id),
+                'docID': self.copy_to_unicode(doc_id),
                 'filetype': 'xml'
             }))
 
