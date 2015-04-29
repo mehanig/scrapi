@@ -3,10 +3,11 @@ from __future__ import unicode_literals
 import re
 from copy import deepcopy
 import functools
+import six
 
 from nameparser import HumanName
 
-URL_REGEX = re.compile(ur'(https?://\S*\.\S*)')
+URL_REGEX = re.compile(r'(https?://\S*\.\S*)')
 
 
 def single_result(l, default=''):
@@ -52,9 +53,10 @@ def default_name_parser(names):
     return contributor_list
 
 
+###TODO FIX THIS IF SIX.PY2 PART!
 def format_tags(all_tags, sep=','):
     tags = []
-    if isinstance(all_tags, basestring):
+    if isinstance(all_tags, six.string_types):
         tags = all_tags.split(sep)
     elif isinstance(all_tags, list):
         for tag in all_tags:
@@ -62,25 +64,35 @@ def format_tags(all_tags, sep=','):
                 tags.extend(tag.split(sep))
             else:
                 tags.append(tag)
+    if six.PY2:
+        return list(set([unicode(tag.lower().strip()) for tag in tags if tag.strip()]))
+    else:
+        return list(set([six.u(tag.lower().strip()) for tag in tags if tag.strip()]))
 
-    return list(set([unicode(tag.lower().strip()) for tag in tags if tag.strip()]))
 
-
+###TODO FIX THIS IF ELSE PART.
 def oai_extract_doi(identifiers):
     identifiers = [identifiers] if not isinstance(identifiers, list) else identifiers
     for item in identifiers:
         if 'doi' in item.lower():
-            return unicode(item.replace('doi:', '').replace('DOI:', '').replace('http://dx.doi.org/', '').strip())
+            if six.PY2:
+                return unicode(item.replace('doi:', '').replace('DOI:', '').replace('http://dx.doi.org/', '').strip())
+            else:
+                return six.u(item.replace('doi:', '').replace('DOI:', '').replace('http://dx.doi.org/', '').strip())
     return ''
 
 
+###TODO: FIX IF six.PY2 part!!!!
 def oai_extract_url(identifiers):
     identifiers = [identifiers] if not isinstance(identifiers, list) else identifiers
     for item in identifiers:
         try:
             found_url = URL_REGEX.search(item).group()
             if 'viewcontent' not in found_url:
-                return found_url.decode('utf-8')
+                if six.PY2:
+                    return found_url.decode('utf-8')
+                else:
+                    return six.u(found_url)
         except AttributeError:
             continue
 

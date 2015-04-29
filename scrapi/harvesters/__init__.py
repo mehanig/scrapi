@@ -14,6 +14,7 @@ __all__.extend([
     if name[-3:] == '.py'
     and name != '__init__.py'
 ])
-
+# .remove('__pycache__') doesn't work right after extend.
+__all__.remove('__pycache__')
 # Import everything in __all__
 from . import *

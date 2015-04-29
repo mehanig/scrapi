@@ -2,7 +2,6 @@
 BioMed Central harvester of public projects for the SHARE Notification Service
 Note: At the moment, this harvester only harvests basic data on each article, and does
 not make a seperate request for additional metadata for each record.
-
 Example API query: http://www.biomedcentral.com/webapi/1.0/latest_articles.json
 """
 
@@ -18,6 +17,7 @@ from nameparser import HumanName
 from scrapi import requests
 from scrapi.base import JSONHarvester
 from scrapi.linter.document import RawDocument
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ class BiomedHarvester(JSONHarvester):
                     {
                         'doc': json.dumps(record),
                         'source': self.short_name,
-                        'docID': doc_id.decode('utf-8'),
+                        'docID': six.u(doc_id),
                         'filetype': 'json'
                     }
                 )

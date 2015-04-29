@@ -7,6 +7,7 @@ from dateutil.parser import parse
 
 from scrapi.base import JSONHarvester
 from scrapi.linter import RawDocument
+import six
 
 expected = {
     "description": "This is a  test",
@@ -71,7 +72,7 @@ class TestHarvester(JSONHarvester):
         return {
             'title': ('/title', lambda x: x[0] if x else ''),
             'description': ('/subtitle', lambda x: x[0] if (isinstance(x, list) and x) else x or ''),
-            'providerUpdatedDateTime': ('/issued/date-parts', lambda x: parse(' '.join([part for part in x[0]])).isoformat().decode('utf-8')),
+            'providerUpdatedDateTime': ('/issued/date-parts', lambda x: six.u(parse(' '.join([part for part in x[0]])).isoformat())),
             'uris': {
                 'canonicalUri': '/URL'
             },

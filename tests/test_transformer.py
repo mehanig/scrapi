@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 
 import functools
 
+import six
+
 from scrapi.base import XMLHarvester
 from scrapi.linter import RawDocument
 from scrapi.base.schemas import CONSTANT
@@ -24,7 +26,7 @@ class TestHarvester(XMLHarvester):
             'source': 'crossref',
             'filetype': 'XML',
             'docID': "1"
-        }) for _ in xrange(days_back)]
+        }) for _ in six.moves.range(days_back)]
 
 
 class TestTransformer(object):

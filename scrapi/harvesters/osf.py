@@ -1,6 +1,5 @@
 """
 Open Science Framework harvester of public projects for the SHARE Notification Service
-
 Example API query: https://osf.io/api/v1/search/
 https://staging.osf.io/api/v1/search/?q=category:registration%20AND%20date_created:[2015-01-01%20TO%202015-03-10]&size=1000
 https://osf.io/api/v1/search/?q=category:registration%20AND%20NOT%20title=test%20AND%20NOT%20title=%22Test%20Project%22
@@ -10,6 +9,8 @@ from __future__ import unicode_literals
 
 import json
 import logging
+import six
+
 from dateutil.parser import parse
 from datetime import date, timedelta
 
@@ -55,7 +56,7 @@ def process_tags(entry):
 
 
 def parse_date(entry):
-    return parse(entry).date().isoformat().decode('utf-8')
+    return six.u(parse(entry).date().isoformat())
 
 
 class OSFHarvester(JSONHarvester):
@@ -109,7 +110,7 @@ class OSFHarvester(JSONHarvester):
                     {
                         'doc': json.dumps(record),
                         'source': self.short_name,
-                        'docID': doc_id.decode('utf-8'),
+                        'docID': six.u(doc_id),
                         'filetype': 'json'
                     }
                 )

@@ -3,6 +3,7 @@ import json
 import errno
 import shutil
 import logging
+import six
 
 from dateutil import parser
 
@@ -56,7 +57,7 @@ def process_one(harvester_name, harvester, raw_path):
         'timestamps': {
             'harvestFinished': timestamp
         },
-        'docID': b64decode(raw_path.split('/')[-3]).decode('utf-8'),
+        'docID': six.u(b64decode(raw_path.split('/')[-3])),
         'source': harvester_name,
         'filetype': harvester['fileFormat'],
     })

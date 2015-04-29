@@ -104,7 +104,7 @@ def harvester(harvester_name, async=False, days=1):
     settings.CELERY_ALWAYS_EAGER = not async
     from scrapi.tasks import run_harvester
 
-    if not registry.get(harvester_name):
+    if not registry[harvester_name]:
         raise ValueError('No such harvesters {}'.format(harvester_name))
 
     run_harvester.delay(harvester_name, days_back=days)

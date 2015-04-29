@@ -12,7 +12,7 @@ import json
 import logging
 from dateutil.parser import parse
 from datetime import date, timedelta
-
+import six
 
 from scrapi import requests
 from scrapi.base import JSONHarvester
@@ -33,7 +33,7 @@ class FigshareHarvester(JSONHarvester):
         'title': '/title',
         'description': '/description',
         'contributors': ('/authors', lambda x: default_name_parser([person['author_name'] for person in x])),
-        'providerUpdatedDateTime': ('/modified_date', lambda x: parse(x).date().isoformat().decode('utf-8')),
+        'providerUpdatedDateTime': ('/modified_date', lambda x: six.u(parse(x).date().isoformat())),
         'uris': {
             'canonicalUri': ('/DOI', lambda x: x[0] if isinstance(x, list) else x),
         },

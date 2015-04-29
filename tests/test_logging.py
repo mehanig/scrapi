@@ -60,6 +60,7 @@ def test_logged_decorator(mock_dispatch):
     ])
 
 
+#TODO: Bad fix, fix to got e.value as proper string
 def test_logged_decorator_exceptions(mock_dispatch):
     @events.logged('testing')
     def logged_func(test):
@@ -68,7 +69,7 @@ def test_logged_decorator_exceptions(mock_dispatch):
     with pytest.raises(ValueError) as e:
         logged_func('foo')
 
-    assert e.value.message == 'test'
+    assert str(e.value) == 'test'
     assert mock_dispatch.call_count == 2
     mock_dispatch.assert_has_calls([
         mock.call('testing', events.STARTED, _index=None, test='foo'),

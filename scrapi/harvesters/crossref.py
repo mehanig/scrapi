@@ -1,6 +1,5 @@
 """
 A CrossRef harvester for the SHARE project
-
 Example API request: http://api.crossref.org/v1/works?filter=from-pub-date:2015-02-02,until-pub-date:2015-02-02&rows=1000
 """
 
@@ -10,6 +9,7 @@ from __future__ import unicode_literals
 
 import json
 import logging
+import six
 
 from datetime import date, timedelta
 
@@ -49,7 +49,7 @@ class CrossRefHarvester(JSONHarvester):
         return {
             'title': ('/title', lambda x: x[0] if x else ''),
             'description': ('/subtitle', lambda x: x[0] if (isinstance(x, list) and x) else x or ''),
-            'providerUpdatedDateTime': ('/issued/date-parts', lambda x: parse(' '.join([str(part) for part in x[0]])).date().isoformat().decode('utf-8')),
+            'providerUpdatedDateTime': ('/issued/date-parts', lambda x: six.u(parse(' '.join([str(part) for part in x[0]])).date().isoformat())),
             'uris': {
                 'canonicalUri': '/URL'
             },
@@ -82,6 +82,17 @@ class CrossRefHarvester(JSONHarvester):
             # }
         }
 
+    def copy_to_unicode(self, element):
+        encoding = self.record_encoding or self.DEFAULT_ENCODING
+        element = ''.join(element)
+        if isinstance(element, six.string_types):
+            return element
+        else:
+            # Again strange things here
+            # return unicode(element, encoding=encoding)
+            return six.u(element)
+
+
     def harvest(self, days_back=0):
         start_date = date.today() - timedelta(days_back)
         base_url = 'http://api.crossref.org/v1/works?filter=from-pub-date:{},until-pub-date:{}&rows={{}}&offset={{}}'.format(str(start_date), str(date.today()))
@@ -89,7 +100,7 @@ class CrossRefHarvester(JSONHarvester):
         logger.info('{} documents to be harvested'.format(total))
 
         doc_list = []
-        for i in xrange(0, total, 1000):
+        for i in six.moves.range(0, total, 1000):
             records = requests.get(base_url.format(1000, i)).json()['message']['items']
             logger.info('Harvested {} documents'.format(i + len(records)))
 
