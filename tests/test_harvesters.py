@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 @freeze_time("2007-12-21")
 @pytest.mark.parametrize('harvester_name', sorted(map(str, registry.keys())))
+# @pytest.mark.parametrize('harvester_name', sorted(map(str, ['biomed',])))
 def test_harvester(monkeypatch, harvester_name, *args, **kwargs):
     monkeypatch.setattr(requests.time, 'sleep', lambda *_, **__: None)
 

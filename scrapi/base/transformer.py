@@ -34,7 +34,7 @@ class BaseTransformer(object):
             elif isinstance(value, six.string_types):
                 transformed[key] = self._transform_string(value, doc)
             elif isinstance(value, six.binary_type):
-                transformed[key] = self._transform_string(value.decode('utf_8'), doc)
+                transformed[key] = self._transform_string(value.decode(), doc)
             elif callable(value):
                 transformed[key] = value(doc)
         return transformed
@@ -46,12 +46,11 @@ class BaseTransformer(object):
 
         fn, values = l[-1], l[:-1]
         args = []
-
         for value in values:
             if isinstance(value, six.string_types):
                 args.append(self._transform_string(value, doc))
             elif isinstance(value, six.binary_type):
-                args.append(self._transform_string(value.decode('utf_8'), doc))
+                args.append(self._transform_string(value.decode(), doc))
             elif callable(value):
                 args.append(value(doc))
         return fn(*args)

@@ -36,7 +36,19 @@ class TestTransformer(object):
 
     def test_arg_kwargs(self):
         def process_title(title, title1="test"):
-            return title[0] + (title1[0] if isinstance(title1, list) else title1)
+            t = title
+            t1 = title1
+            # import pdb; pdb.set_trace()
+            if isinstance(title, six.binary_type):
+                t = [title.decode(), ]
+            if isinstance(title1, six.binary_type):
+                t1 = [title1.decode(), ]
+            if isinstance(title1, six.text_type):
+                t1 = [title1, ]
+            if isinstance(title, six.text_type):
+                t = [title, ]
+            return (t[0] if isinstance(t, list) else t) + (t1[0] if isinstance(t1, list) else t1)
+
 
         def process_title2(title1="test"):
             return title1[0] if isinstance(title1, list) else title1

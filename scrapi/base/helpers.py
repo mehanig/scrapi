@@ -11,6 +11,10 @@ URL_REGEX = re.compile(r'(https?://\S*\.\S*)')
 
 
 def single_result(l, default=''):
+    if isinstance(l, six.binary_type):
+        l = [l.decode(),]
+    elif isinstance(l, six.text_type):
+        l = [l, ]
     return l[0] if l else default
 
 
@@ -37,6 +41,8 @@ def updated_schema(old, new):
 
 
 def default_name_parser(names):
+    if isinstance(names, six.binary_type):
+        names = names.decode()
     contributor_list = []
     for person in names:
         name = HumanName(person)
@@ -64,7 +70,7 @@ def format_tags(all_tags, sep=','):
     elif isinstance(all_tags, list):
         for tag in all_tags:
             if isinstance(tag, six.binary_type):
-                tag = tag.decode('utf_8')
+                tag = tag.decode()
             if sep in tag:
                 tags.extend(tag.split(sep))
             else:
@@ -115,3 +121,12 @@ def oai_process_contributors(*args):
 
 def pack(*args, **kwargs):
     return args, kwargs
+
+
+def data_to_unicode(data):
+    if isinstance(data, six.binary_type):
+        return data.decode()
+    elif isinstance(data, six.string_types):
+        return data
+    else:
+        raise TypeError

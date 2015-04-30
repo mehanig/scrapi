@@ -16,7 +16,10 @@ from scrapi.base.schemas import OAISCHEMA
 # from scrapi.base.helpers import updated_schema
 from scrapi.linter.document import RawDocument, NormalizedDocument
 from scrapi.base.transformer import XMLTransformer, JSONTransformer
+from .helpers import data_to_unicode
+
 import six
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -78,6 +81,8 @@ class JSONHarvester(BaseHarvester, JSONTransformer):
     file_format = 'json'
 
     def normalize(self, raw_doc):
+        if isinstance(raw_doc['doc'], six.binary_type):
+            raw_doc['doc'] = raw_doc['doc'].decode()
         transformed = self.transform(json.loads(raw_doc['doc']))
         transformed['shareProperties'] = {
             'source': self.short_name
@@ -89,6 +94,8 @@ class XMLHarvester(BaseHarvester, XMLTransformer):
     file_format = 'xml'
 
     def normalize(self, raw_doc):
+        if isinstance(raw_doc['doc'], six.binary_type):
+            raw_doc['doc'] = raw_doc['doc'].decode()
         transformed = self.transform(etree.XML(raw_doc['doc']))
         transformed['shareProperties'] = {
             'source': self.short_name
@@ -170,12 +177,11 @@ class OAIHarvester(XMLHarvester):
                 'ns0:header/ns0:identifier', namespaces=self.namespaces)[0].text
             record = (etree.tostring(record, encoding=self.record_encoding)).decode(encoding='UTF-8')
             rawdoc_list.append(RawDocument({
-                'doc': record,
-                'source': util.copy_to_unicode(self.short_name),
-                'docID': util.copy_to_unicode(doc_id),
+                'doc': data_to_unicode(record),
+                'source': data_to_unicode(self.short_name),
+                'docID': data_to_unicode(doc_id),
                 'filetype': 'xml'
             }))
-
         return rawdoc_list
 
     def get_records(self, url, start_date, end_date, resump_token=''):
@@ -215,10 +221,10 @@ class OAIHarvester(XMLHarvester):
             if not {x.replace('publication:', '') for x in set_spec}.intersection(self.approved_sets):
                 logger.info('Series {} not in approved list'.format(set_spec))
                 return None
-
         status = result.xpath('ns0:header/@status', namespaces=self.namespaces)
         if status and status[0] == 'deleted':
             logger.info('Deleted record, not normalizing {}'.format(raw_doc['docID']))
             return None
 
-        return super(OAIHarvester, self).normalize(raw_doc)
+        result = super(OAIHarvester, self).normalize(raw_doc)
+        return result
