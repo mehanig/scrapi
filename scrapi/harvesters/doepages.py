@@ -8,6 +8,7 @@ from scrapi import requests
 from scrapi.base import XMLHarvester
 from scrapi.linter import RawDocument
 from scrapi.util import copy_to_unicode
+from scrapi.base.helpers import data_to_unicode
 from scrapi.base.schemas import BASEXMLSCHEMA
 
 
@@ -38,7 +39,7 @@ class DoepagesHarvester(XMLHarvester):
             doc_id = record.xpath('dc:ostiId/node()', namespaces=self.namespaces)[0]
             record = etree.tostring(record, encoding=record_encoding)
             xml_list.append(RawDocument({
-                'doc': record,
+                'doc': data_to_unicode(record),
                 'source': self.short_name,
                 'docID': copy_to_unicode(doc_id),
                 'filetype': 'xml'

@@ -11,8 +11,10 @@ URL_REGEX = re.compile(r'(https?://\S*\.\S*)')
 
 
 def single_result(l, default=''):
+    if isinstance(l, list):
+        l = l[0]
     if isinstance(l, six.binary_type):
-        l = [l.decode(),]
+        l = [l.decode(), ]
     elif isinstance(l, six.text_type):
         l = [l, ]
     return l[0] if l else default
@@ -46,6 +48,14 @@ def default_name_parser(names):
     contributor_list = []
     for person in names:
         name = HumanName(person)
+        if isinstance(person, six.binary_type):
+            person = person.decode()
+        if isinstance(name.first, six.binary_type):
+            name.first = name.first.decode()
+        if isinstance(name.middle, six.binary_type):
+            name.middle = name.middle.decode()
+        if isinstance(name.last, six.binary_type):
+            name.last = name.last.decode()
         contributor = {
             'name': person,
             'givenName': name.first,

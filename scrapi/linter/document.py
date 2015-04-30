@@ -3,6 +3,7 @@ import json
 import jsonschema
 
 from scrapi import registry
+import six
 
 
 class BaseDocument(object):
@@ -15,7 +16,10 @@ class BaseDocument(object):
     schema = {}
 
     def __init__(self, attributes):
-        jsonschema.validate(attributes, self.schema, format_checker=jsonschema.FormatChecker())
+        try:
+            jsonschema.validate(attributes, self.schema, format_checker=jsonschema.FormatChecker())
+        except Exception as e:
+            import pdb; pdb.set_trace()
 
         self.attributes = attributes
 

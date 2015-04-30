@@ -100,7 +100,9 @@ class XMLHarvester(BaseHarvester, XMLTransformer):
         transformed['shareProperties'] = {
             'source': self.short_name
         }
-        return NormalizedDocument(transformed)
+        x = NormalizedDocument(transformed)
+        # import pdb; pdb.set_trace()
+        return x
 
 
 class OAIHarvester(XMLHarvester):
