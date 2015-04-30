@@ -59,7 +59,7 @@ def serialize_fluent_data(data):
     elif isinstance(data, six.text_type):
         return data
     else:
-        return repr(data)
+        return str(data)
 
 
 # Use _index here as to not clutter the namespace for kwargs

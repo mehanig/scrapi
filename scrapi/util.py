@@ -11,14 +11,12 @@ def copy_to_unicode(element, encoding='utf-8'):
     standard version of unicode that can be pickalable -
     necessary for linting """
 
-    #Commented because I don't get it. Need to fix it later
-    #
-    # element = ''.join(element)
-    # if isinstance(element, six.text_type):
-    #     return element
-    # else:
-    #     return unicode(element, encoding=encoding)
-    return six.u(element)
+    element = ''.join(element)
+    if isinstance(element, six.text_type):
+        return element
+    else:
+        return unicode(element, encoding=encoding)
+        # return six.u(element)
 
 def stamp_from_raw(raw_doc, **kwargs):
     kwargs['normalizeFinished'] = timestamp()

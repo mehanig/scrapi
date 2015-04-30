@@ -168,7 +168,7 @@ class OAIHarvester(XMLHarvester):
         for record in records:
             doc_id = record.xpath(
                 'ns0:header/ns0:identifier', namespaces=self.namespaces)[0].text
-            record = etree.tostring(record, encoding=self.record_encoding)
+            record = (etree.tostring(record, encoding=self.record_encoding)).decode(encoding='UTF-8')
             rawdoc_list.append(RawDocument({
                 'doc': record,
                 'source': util.copy_to_unicode(self.short_name),
