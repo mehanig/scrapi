@@ -58,8 +58,13 @@ def format_tags(all_tags, sep=','):
     tags = []
     if isinstance(all_tags, six.string_types):
         tags = all_tags.split(sep)
+    elif isinstance(all_tags, six.binary_type):
+        all_tags = all_tags.decode()
+        tags = all_tags.split(sep)
     elif isinstance(all_tags, list):
         for tag in all_tags:
+            if isinstance(tag, six.binary_type):
+                tag = tag.decode('utf_8')
             if sep in tag:
                 tags.extend(tag.split(sep))
             else:
@@ -87,12 +92,12 @@ def oai_extract_url(identifiers):
     identifiers = [identifiers] if not isinstance(identifiers, list) else identifiers
     for item in identifiers:
         try:
-            found_url = URL_REGEX.search(item).group()
+            found_url = URL_REGEX.search(item.decode()).group()
             if 'viewcontent' not in found_url:
-                if six.PY2:
-                    return found_url.decode('utf-8')
-                else:
-                    return six.u(found_url)
+                # if six.PY2:
+                return found_url.decode('utf-8')
+                # else:
+                #     return found_url.decode('utf-8')
         except AttributeError:
             continue
 

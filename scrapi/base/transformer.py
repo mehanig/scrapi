@@ -33,6 +33,8 @@ class BaseTransformer(object):
                 transformed[key] = self._transform_iterable(value, doc)
             elif isinstance(value, six.string_types):
                 transformed[key] = self._transform_string(value, doc)
+            elif isinstance(value, six.binary_type):
+                transformed[key] = self._transform_string(value.decode('utf_8'), doc)
             elif callable(value):
                 transformed[key] = value(doc)
         return transformed
@@ -48,6 +50,8 @@ class BaseTransformer(object):
         for value in values:
             if isinstance(value, six.string_types):
                 args.append(self._transform_string(value, doc))
+            elif isinstance(value, six.binary_type):
+                args.append(self._transform_string(value.decode('utf_8'), doc))
             elif callable(value):
                 args.append(value(doc))
         return fn(*args)
@@ -73,7 +77,7 @@ class XMLTransformer(BaseTransformer):
 
     def _transform_string(self, string, doc):
         val = doc.xpath(string, namespaces=self.namespaces)
-        return six.u(val[0]) if len(val) == 1 else [six.u(v) for v in val] or ''
+        return six.u(val[0].encode('utf_8')) if len(val) == 1 else [six.u(v.encode('utf_8')) for v in val] or ''
 
     @abc.abstractproperty
     def namespaces(self):

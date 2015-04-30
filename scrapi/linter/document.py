@@ -73,5 +73,5 @@ class RawDocument(BaseDocument):
 
 class NormalizedDocument(BaseDocument):
 
-    with open('normalized.json') as f:
+    with open('normalized.json', 'rt') as f:
         schema = json.load(f)

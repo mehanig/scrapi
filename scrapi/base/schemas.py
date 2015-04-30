@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from dateutil.parser import parse
+import six
 
 from .helpers import (
     default_name_parser,
@@ -30,7 +31,7 @@ OAISCHEMA = {
     "uris": {
         "canonicalUri": ('//dc:identifier/node()', oai_extract_url)
     },
-    'providerUpdatedDateTime': ('//ns0:header/ns0:datestamp/node()', lambda x: parse(x[0]).replace(tzinfo=None).isoformat()),
+    'providerUpdatedDateTime': ('//ns0:header/ns0:datestamp/node()', lambda x: six.u(parse(x).replace(tzinfo=None).isoformat())),
     'title': ('//dc:title/node()', single_result),
     'description': ('//dc:description/node()', single_result),
     'tags': ('//dc:subject/node()', format_tags)

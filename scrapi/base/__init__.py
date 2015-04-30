@@ -201,6 +201,8 @@ class OAIHarvester(XMLHarvester):
 
     def normalize(self, raw_doc):
         str_result = raw_doc.get('doc')
+        if isinstance(str_result, six.binary_type):
+            str_result = str_result.decode('utf_8')
         result = etree.XML(str_result)
 
         if self.approved_sets:
