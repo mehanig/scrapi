@@ -54,7 +54,7 @@ class TestModel(object):
         resp = requests.HarvesterResponse(content=json.dumps(data))
 
         assert resp.json() == data
-        assert resp.content == json.dumps(data)
+        assert resp.content == str.encode(json.dumps(data))
 
     @pytest.mark.cassandra
     def test_text_works(self):
@@ -66,8 +66,8 @@ class TestModel(object):
     def test_text_is_unicode(self):
         resp = requests.HarvesterResponse(content='probably xml')
 
-        assert isinstance(resp.text, unicode)
-        assert resp.text == 'probably xml'.decode('utf-8')
+        assert isinstance(resp.text, six.string_types)
+        assert resp.text == 'probably xml'
 
 
 class TestCassandraIntegration(object):
@@ -79,7 +79,7 @@ class TestCassandraIntegration(object):
         resp = requests.get('dinosaurs.sexy')
 
         assert resp.headers == {}
-        assert resp.content == 'rawr'
+        assert resp.content == b'rawr'
         assert not mock_requests.request.called
         assert isinstance(resp, requests.HarvesterResponse)
 
@@ -99,7 +99,7 @@ class TestCassandraIntegration(object):
         model = requests.HarvesterResponse.get(method='get', url='dinosaurs.sexy')
 
         assert model.method == 'get'
-        assert model.content == 'rawr'
+        assert model.content == b'rawr'
         assert model.encoding == 'utf-8'
         assert model.status_code == 200
         assert model.url == 'dinosaurs.sexy'
@@ -116,7 +116,7 @@ class TestCassandraIntegration(object):
         model = requests.HarvesterResponse.get(method='get', url='dinosaurs.sexy')
 
         assert model.method == 'get'
-        assert model.content == 'rawr'
+        assert model.content == b'rawr'
         assert model.encoding == 'utf-8'
         assert model.status_code == 200
         assert model.url == 'dinosaurs.sexy'
@@ -135,16 +135,16 @@ class TestCassandraIntegration(object):
     @pytest.mark.cassandra
     def test_force_makes_new_request(self, mock_requests, monkeypatch):
         requests.HarvesterResponse(ok=True, method='get', url='dinosaurs.sexy', content='citychicken').save()
-        mock_requests.request.return_value = mock.Mock(encoding='utf-8', content='Snapcity', status_code=200, headers={'tota': 'dyle'})
+        mock_requests.request.return_value = mock.Mock(encoding='utf-8', content=b'Snapcity', status_code=200, headers={'tota': 'dyle'})
 
         resp = requests.get('dinosaurs.sexy')
 
-        assert resp.content == 'citychicken'
+        assert resp.content == b'citychicken'
         assert mock_requests.request.called is False
 
         resp = requests.get('dinosaurs.sexy', force=True)
 
-        assert resp.content == 'Snapcity'
+        assert resp.content == b'Snapcity'
         assert mock_requests.request.called is True
 
     @pytest.mark.cassandra

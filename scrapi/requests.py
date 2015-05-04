@@ -51,7 +51,7 @@ class HarvesterResponse(cqlengine.Model):
         cqlengine.Model.__init__(self, content=content, **values)
 
     def json(self):
-        return json.loads(str.decode(self.content))
+        return json.loads(self.content.decode("utf-8"))
 
     @property
     def headers(self):
@@ -59,7 +59,7 @@ class HarvesterResponse(cqlengine.Model):
 
     @property
     def text(self):
-        return six.u(self.content)
+        return self.content.decode("utf-8")
 
 
 def _maybe_load_response(method, url):
