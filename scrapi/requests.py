@@ -45,12 +45,17 @@ class HarvesterResponse(cqlengine.Model):
     status_code = columns.Integer()
     time_made = columns.DateTime(default=datetime.now)
 
+    def __init__(self, content=None, **values):
+        if isinstance(content, six.string_types):
+            content = str.encode(content)
+        cqlengine.Model.__init__(self, content=content, **values)
+
     def json(self):
-        return json.loads(self.content)
+        return json.loads(str.decode(self.content))
 
     @property
     def headers(self):
-        return CaseInsensitiveDict(json.loads(self.headers_str).decode())
+        return CaseInsensitiveDict(json.loads(self.headers_str))
 
     @property
     def text(self):
@@ -90,7 +95,7 @@ def record_or_load_response(method, url, throttle=None, force=False, params=None
             url=url,
             method=method,
             ok=response.ok,
-            content=response.content,
+            content=str.encode(response.content),
             encoding=response.encoding,
             status_code=response.status_code,
             headers_str=json.dumps(dict(response.headers))

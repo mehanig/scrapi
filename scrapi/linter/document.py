@@ -38,9 +38,9 @@ class BaseDocument(object):
 
 class RawDocument(BaseDocument):
 
-    def __init__(self, attributes):
-        import pdb; pdb.set_trace()
-        BaseDocument.__init__(self, attributes)
+    # def __init__(self, attributes):
+        # import pdb; pdb.set_trace()
+        # BaseDocument.__init__(self, attributes)
     #     for key, value in self.attributes.items():
     #         self[key] = str.encode(value)
 

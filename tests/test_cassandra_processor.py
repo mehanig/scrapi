@@ -16,6 +16,7 @@ RAW = RawDocument(utils.RAW_DOC)
 
 @pytest.mark.cassandra
 def test_process_raw():
+    # import pdb; pdb.set_trace()
     test_db.process_raw(RAW)
     queryset = DocumentModel.objects(docID='someID', source=RAW['source'])
     assert(len(queryset) == 1)
