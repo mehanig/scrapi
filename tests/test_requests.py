@@ -1,69 +1,75 @@
-# import mock
-# import json
-# import pytest
-#
-# from scrapi import requests
-#
-#
-# @pytest.fixture(autouse=True)
-# def mock_requests(monkeypatch):
-#     mock_req = mock.Mock()
-#     monkeypatch.setattr(requests, 'requests', mock_req)
-#     return mock_req
-#
-#
-# @pytest.fixture(autouse=True)
-# def mock_record_transactions(monkeypatch):
-#     monkeypatch.setattr(requests.settings, 'RECORD_HTTP_TRANSACTIONS', True)
-#
-#
-# class TestSettings(object):
-#
-#     def test_record_or_load_response_respects_record_false(self, mock_requests, monkeypatch):
-#         mock_rec_or_load = mock.Mock()
-#         monkeypatch.setattr(requests.settings, 'RECORD_HTTP_TRANSACTIONS', False)
-#         monkeypatch.setattr(requests, 'record_or_load_response', mock_rec_or_load)
-#
-#         requests.get('foo')
-#
-#         assert not mock_rec_or_load.called
-#         assert mock_requests.request.called_once_with('get', 'foo')
-#
-#     def test_record_or_load_response_respects_record_true(self, mock_requests, monkeypatch):
-#         mock_rec_or_load = mock.Mock()
-#         monkeypatch.setattr(requests, 'record_or_load_response', mock_rec_or_load)
-#
-#         requests.get('foo')
-#
-#         assert mock_rec_or_load.called_once_with('get', 'foo')
-#         assert mock_requests.request.called_once_with('get', 'foo')
-#
-#
+import mock
+import json
+import pytest
+import six
+
+from scrapi import requests
+
+
+@pytest.fixture(autouse=True)
+def mock_requests(monkeypatch):
+    mock_req = mock.Mock()
+    monkeypatch.setattr(requests, 'requests', mock_req)
+    return mock_req
+
+
+@pytest.fixture(autouse=True)
+def mock_record_transactions(monkeypatch):
+    monkeypatch.setattr(requests.settings, 'RECORD_HTTP_TRANSACTIONS', True)
+
+
+class TestSettings(object):
+
+    def test_record_or_load_response_respects_record_false(self, mock_requests, monkeypatch):
+        mock_rec_or_load = mock.Mock()
+        monkeypatch.setattr(requests.settings, 'RECORD_HTTP_TRANSACTIONS', False)
+        monkeypatch.setattr(requests, 'record_or_load_response', mock_rec_or_load)
+
+        requests.get('foo')
+
+        assert not mock_rec_or_load.called
+        assert mock_requests.request.called_once_with('get', 'foo')
+
+    def test_record_or_load_response_respects_record_true(self, mock_requests, monkeypatch):
+        mock_rec_or_load = mock.Mock()
+        monkeypatch.setattr(requests, 'record_or_load_response', mock_rec_or_load)
+
+        requests.get('foo')
+
+        assert mock_rec_or_load.called_once_with('get', 'foo')
+        assert mock_requests.request.called_once_with('get', 'foo')
+
+
 # class TestModel(object):
 #
 #     @pytest.mark.cassandra
-#     def test_json_works(self):
-#         data = {'totally': 'dyle'}
-#
-#         resp = requests.HarvesterResponse(content=json.dumps(data))
-#
-#         assert resp.json() == data
-#         assert resp.content == json.dumps(data)
-#
-#     @pytest.mark.cassandra
-#     def test_text_works(self):
-#         resp = requests.HarvesterResponse(content='probably xml')
-#
-#         assert resp.text == 'probably xml'
-#
-#     @pytest.mark.cassandra
-#     def test_text_is_unicode(self):
-#         resp = requests.HarvesterResponse(content='probably xml')
-#
-#         assert isinstance(resp.text, unicode)
-#         assert resp.text == 'probably xml'.decode('utf-8')
-#
-#
+#     def test_smoke(self):
+#         assert 1 == 1
+
+    #
+    # @pytest.mark.cassandra
+    # def test_json_works(self):
+    #     data = {'totally': 'dyle'}
+    #
+    #     resp = requests.HarvesterResponse(content=json.dumps(data))
+    #
+    #     assert resp.json() == data
+    #     assert resp.content == json.dumps(data)
+    #
+    # @pytest.mark.cassandra
+    # def test_text_works(self):
+    #     resp = requests.HarvesterResponse(content='probably xml')
+    #
+    #     assert resp.text == 'probably xml'
+    #
+    # @pytest.mark.cassandra
+    # def test_text_is_unicode(self):
+    #     resp = requests.HarvesterResponse(content='probably xml')
+    #
+    #     assert isinstance(resp.text, unicode)
+    #     assert resp.text == 'probably xml'.decode('utf-8')
+
+
 # class TestCassandraIntegration(object):
 #
 #     @pytest.mark.cassandra

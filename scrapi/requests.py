@@ -46,7 +46,7 @@ class HarvesterResponse(cqlengine.Model):
     time_made = columns.DateTime(default=datetime.now)
 
     def json(self):
-        return json.loads(self.content).decode()
+        return json.loads(self.content)
 
     @property
     def headers(self):

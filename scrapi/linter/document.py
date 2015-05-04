@@ -16,11 +16,7 @@ class BaseDocument(object):
     schema = {}
 
     def __init__(self, attributes):
-        try:
-            jsonschema.validate(attributes, self.schema, format_checker=jsonschema.FormatChecker())
-        except Exception as e:
-            import pdb; pdb.set_trace()
-
+        jsonschema.validate(attributes, self.schema, format_checker=jsonschema.FormatChecker())
         self.attributes = attributes
 
     def get(self, attribute, default=None):
@@ -41,6 +37,12 @@ class BaseDocument(object):
 
 
 class RawDocument(BaseDocument):
+
+    def __init__(self, attributes):
+        import pdb; pdb.set_trace()
+        BaseDocument.__init__(self, attributes)
+    #     for key, value in self.attributes.items():
+    #         self[key] = str.encode(value)
 
     @property
     def schema(self):
