@@ -6,16 +6,14 @@ iindividual result: http://ClinicalTrials.gov/show/NCT02425332?displayxml=true
 
 """
 
-#!/usr/bin/env python
 from __future__ import unicode_literals
 
 import time
 import logging
 from datetime import date, timedelta
 
+import xmltodict
 from lxml import etree
-
-from dateutil.parser import *
 
 from scrapi import requests
 from scrapi import settings
@@ -23,9 +21,16 @@ from scrapi.base import XMLHarvester
 from scrapi.util import copy_to_unicode
 from scrapi.linter.document import RawDocument
 from scrapi.base.schemas import default_name_parser
-from scrapi.base.helpers import compose, single_result, build_properties
+from scrapi.base.helpers import compose, single_result, build_properties, datetime_formatter
 
 logger = logging.getLogger(__name__)
+
+
+element_to_dict = compose(xmltodict.parse, etree.tostring)
+
+
+def non_string(item):
+    return not isinstance(item, str)
 
 
 class ClinicalTrialsHarvester(XMLHarvester):
@@ -44,10 +49,10 @@ class ClinicalTrialsHarvester(XMLHarvester):
         "uris": {
             "canonicalUri": ("//required_header/url/node()", single_result)
         },
-        "providerUpdatedDateTime": ("lastchanged_date/node()", compose(lambda x: parse(x).replace(tzinfo=None).isoformat(), single_result)),
+        "providerUpdatedDateTime": ("lastchanged_date/node()", compose(datetime_formatter, single_result)),
         "title": ('//official_title/node()', '//brief_title/node()', lambda x, y: single_result(x) or single_result(y)),
         "description": ('//brief_summary/textblock/node()', '//brief_summary/textblock/node()', lambda x, y: single_result(x) or single_result(y)),
-        "tags": ("//keyword/node()", lambda tags: [unicode(tag.lower()) for tag in tags]),
+        "tags": ("//keyword/node()", lambda tags: [tag.lower() for tag in tags]),
         "sponsorships": [
             {
                 "sponsor": {
@@ -86,7 +91,10 @@ class ClinicalTrialsHarvester(XMLHarvester):
             ('enrollment', '//enrollment/node()'),
             ('armGroup', '//arm_group/arm_group_label/node()'),
             ('intervention', '//intervention/intervention_type/node()'),
-            ('eligibility', '//elligibility/node()'),
+            ('eligibility', ('//eligibility/node()', compose(
+                lambda x: map(element_to_dict, x),
+                lambda x: filter(non_string, x)
+            ))),
             ('link', '//link/url/node()'),
             ('responsible_party', '//responsible_party/responsible_party_full_name/node()')
         )
@@ -113,7 +121,7 @@ class ClinicalTrialsHarvester(XMLHarvester):
         start_year = start_date.strftime('%Y')
 
         base_url = 'http://clinicaltrials.gov/ct2/results?lup_s='
-        url_end = '{}%2F{}%2F{}%2F&lup_e={}%2F{}%2F{}&displayxml=true'.\
+        url_end = '{}%2F{}%2F{}&lup_e={}%2F{}%2F{}&displayxml=true'.\
             format(start_month, start_day, start_year, end_month, end_day, end_year)
 
         url = base_url + url_end

@@ -1,16 +1,15 @@
 from __future__ import unicode_literals
 
-from dateutil.parser import parse
-
 from .helpers import (
-    default_name_parser,
-    oai_extract_url,
-    oai_process_contributors,
     compose,
-    single_result,
     format_tags,
+    single_result,
+    language_codes,
+    datetime_formatter,
+    oai_process_uris,
     build_properties,
-    language_code
+    default_name_parser,
+    oai_process_contributors,
 )
 
 
@@ -18,12 +17,12 @@ DOESCHEMA = {
     "description": ('//dc:description/node()', compose(lambda x: x.strip(), single_result)),
     "contributors": ('//dc:creator/node()', compose(default_name_parser, lambda x: x.split(';'), single_result)),
     "title": ('//dc:title/node()', compose(lambda x: x.strip(), single_result)),
-    "providerUpdatedDateTime": ('//dc:dateEntry/node()', compose(lambda x: x.strip(), single_result)),
+    "providerUpdatedDateTime": ('//dc:dateEntry/node()', compose(datetime_formatter, single_result)),
     "uris": {
         "canonicalUri": ('//dcq:identifier-citation/node()', compose(lambda x: x.strip(), single_result)),
         "objectUris": [('//dc:doi/node()', compose(lambda x: 'http://dx.doi.org/' + x, single_result))]
     },
-    "languages": ("//dc:language", compose(lambda x: [x], language_code, single_result)),
+    "languages": ("//dc:language/text()", language_codes),
     "publisher": {
         "name": ("//dcq:publisher/node()", single_result)
     },
@@ -53,15 +52,13 @@ DOESCHEMA = {
 
 OAISCHEMA = {
     "contributors": ('//dc:creator/node()', '//dc:contributor/node()', oai_process_contributors),
-    "uris": {
-        "canonicalUri": ('//dc:identifier/node()', oai_extract_url)
-    },
-    'providerUpdatedDateTime': ('//ns0:header/ns0:datestamp/node()', lambda x: parse(x[0]).replace(tzinfo=None).isoformat()),
+    "uris": ('//dc:doi/node()', '//dc:identifier/node()', oai_process_uris),
+    'providerUpdatedDateTime': ('//ns0:header/ns0:datestamp/node()', compose(datetime_formatter, single_result)),
     'title': ('//dc:title/node()', single_result),
     'description': ('//dc:description/node()', single_result),
     'subjects': ('//dc:subject/node()', format_tags),
     'publisher': {
         'name': ('//dc:publisher/node()', single_result)
     },
-    'languages': ('//dc:language', compose(lambda x: [x], language_code, single_result))
+    'languages': ('//dc:language/text()', language_codes)
 }

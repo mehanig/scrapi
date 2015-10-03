@@ -1,12 +1,16 @@
 from __future__ import unicode_literals
 
+import copy
+from six.moves import xrange
+
 from scrapi.base import XMLHarvester
 from scrapi.base.schemas import DOESCHEMA
-from scrapi.base.helpers import updated_schema, build_properties, single_result, updated_schema
+from scrapi.linter.document import RawDocument
+from scrapi.base.helpers import updated_schema, build_properties, single_result
 
 
 RAW_DOC = {
-    'doc': str('{}'),
+    'doc': b'{}',
     'docID': 'someID',
     'timestamps': {
         'harvestFinished': '2012-11-30T17:05:48+00:00',
@@ -17,11 +21,14 @@ RAW_DOC = {
     'source': 'test'
 }
 
+POSTGRES_RAW_DOC = copy.copy(RAW_DOC)
+POSTGRES_RAW_DOC['doc'] = '{}'
+
 NORMALIZED_DOC = {
     'title': 'No',
     'contributors': [{'name': ''}],
     'source': 'test',
-    'providerUpdatedDateTime': '2014-04-04T00:00:00',
+    'providerUpdatedDateTime': '2014-04-04T00:00:00Z',
     'uris': {
         'canonicalUri': 'http://example.com/direct'
     }
@@ -46,7 +53,7 @@ RECORD = {
         'name': 'figures',
         'properties': {
             'figures': 'http://www.plosone.org/article/image.png',
-            }
+        }
         }, {
         'name': 'type',
         'properties': {
@@ -58,7 +65,7 @@ RECORD = {
             the dietary patterns of eight free-ranging vervet monkey\
             (Chlorocebus pygerythrus) groups in South Africa using stable\
             isotope analysis.',
-    'providerUpdatedDateTime': '2015-02-23T00:00:00',
+    'providerUpdatedDateTime': '2015-02-23T00:00:00Z',
     'shareProperties': {
         'source': 'test'
     }
@@ -82,7 +89,7 @@ TEST_NAMESPACES = {
 }
 
 
-TEST_XML_DOC = '''
+TEST_XML_DOC = b'''
     <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcq="http://purl.org/dc/terms/">
         <records count="97" morepages="true" start="1" end="10">
             <record rownumber="1">
@@ -148,7 +155,7 @@ TEST_XML_DOC = '''
     </rdf:RDF>
 '''
 
-TEST_OAI_DOC = '''
+TEST_OAI_DOC = b'''
     <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
     <responseDate>2015-03-30T18:31:29Z</responseDate>
     <request verb="ListRecords" metadataPrefix="oai_dc" from="2014-09-26T00:00:00Z">http://repository.stcloudstate.edu/do/oai/</request>
@@ -185,6 +192,7 @@ TEST_OAI_DOC = '''
     </OAI-PMH>
 '''
 
+
 class TestHarvester(XMLHarvester):
     long_name = 'TEST'
     short_name = 'test'
@@ -194,10 +202,13 @@ class TestHarvester(XMLHarvester):
 
     def harvest(self, days_back=1):
         return [RawDocument({
-            'doc': str(TEST_XML_DOC),
+            'doc': TEST_XML_DOC,
             'source': 'test',
             'filetype': 'XML',
-            'docID': "1"
+            'docID': "1",
+            'timestamps': {
+                'harvestFinished': '2015-03-14T17:05:48+00:00',
+                'harvestStarted': '2015-03-14T17:05:48+00:00',
+                'harvestTaskCreated': '2015-03-16T17:05:48+00:00'
+            }
         }) for _ in xrange(days_back)]
-
-

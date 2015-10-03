@@ -1,23 +1,35 @@
 import logging
+import functools
+from itertools import islice
 from datetime import date, timedelta
 
-import requests
 from celery import Celery
 
 from scrapi import util
 from scrapi import events
-from scrapi import database
 from scrapi import settings
 from scrapi import registry
 from scrapi import processing
 from scrapi.util import timestamp
 
-
 app = Celery()
 app.config_from_object(settings)
 
-database.setup()
 logger = logging.getLogger(__name__)
+
+
+def task_autoretry(*args_task, **kwargs_task):
+    def actual_decorator(func):
+        @app.task(*args_task, **kwargs_task)
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except kwargs_task.get('autoretry_on', Exception) as exc:
+                logger.info('Retrying with exception {}'.format(exc))
+                raise wrapper.retry(exc=exc)
+        return wrapper
+    return actual_decorator
 
 
 @app.task
@@ -57,11 +69,12 @@ def harvest(harvester_name, job_created, start_date=None, end_date=None):
 
 
 @app.task
-def begin_normalization((raw_docs, timestamps), harvester_name):
+def begin_normalization(raw_docs_timestamps, harvester_name):
     '''harvest_ret is harvest return value:
         a tuple contaiing list of rawDocuments and
         a dictionary of timestamps
     '''
+    (raw_docs, timestamps) = raw_docs_timestamps
     logger.info('Normalizing {} documents for harvester "{}"'
                 .format(len(raw_docs), harvester_name))
     # raw is a single raw document
@@ -72,21 +85,21 @@ def begin_normalization((raw_docs, timestamps), harvester_name):
 @events.creates_task(events.PROCESSING)
 @events.creates_task(events.NORMALIZATION)
 def spawn_tasks(raw, timestamps, harvester_name):
-        raw['timestamps'] = timestamps
-        raw['timestamps']['normalizeTaskCreated'] = timestamp()
-        chain = (normalize.si(raw, harvester_name) | process_normalized.s(raw))
+    raw['timestamps'] = timestamps
+    raw['timestamps']['normalizeTaskCreated'] = timestamp()
+    chain = (normalize.si(raw, harvester_name) | process_normalized.s(raw))
 
-        chain.apply_async()
-        process_raw.delay(raw)
+    chain.apply_async()
+    process_raw.delay(raw)
 
 
-@app.task
+@task_autoretry(default_retry_delay=settings.CELERY_RETRY_DELAY, max_retries=settings.CELERY_MAX_RETRIES)
 @events.logged(events.PROCESSING, 'raw')
 def process_raw(raw_doc, **kwargs):
     processing.process_raw(raw_doc, kwargs)
 
 
-@app.task
+@task_autoretry(default_retry_delay=settings.CELERY_RETRY_DELAY, max_retries=settings.CELERY_MAX_RETRIES, throws=events.Skip)
 @events.logged(events.NORMALIZATION)
 def normalize(raw_doc, harvester_name):
     normalized_started = timestamp()
@@ -102,7 +115,7 @@ def normalize(raw_doc, harvester_name):
     return normalized  # returns a single normalized document
 
 
-@app.task
+@task_autoretry(default_retry_delay=settings.CELERY_RETRY_DELAY, max_retries=settings.CELERY_MAX_RETRIES, throws=events.Skip)
 @events.logged(events.PROCESSING, 'normalized')
 def process_normalized(normalized_doc, raw_doc, **kwargs):
     if not normalized_doc:
@@ -111,7 +124,22 @@ def process_normalized(normalized_doc, raw_doc, **kwargs):
 
 
 @app.task
-def update_pubsubhubbub():
-    payload = {'hub.mode': 'publish', 'hub.url': '{url}rss/'.format(url=settings.OSF_APP_URL)}
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    return requests.post('https://pubsubhubbub.appspot.com', headers=headers, params=payload)
+def migrate(migration, source_db=None, sources=tuple(), async=False, dry=True, group_size=1000, **kwargs):
+
+    source_db = source_db or settings.CANONICAL_PROCESSOR
+    documents = processing.get_processor(source_db).documents
+
+    docs = documents(*sources)
+    if async:
+        segment = list(islice(docs, group_size))
+        while segment:
+            migration.s(segment, sources=sources, dry=dry, **kwargs).apply_async()
+            segment = list(islice(docs, group_size))
+    else:
+        for doc in docs:
+            migration((doc,), sources=sources, dry=dry, **kwargs)
+
+    if dry:
+        logger.info('Dry run complete')
+
+    logger.info('Documents processed for migration {}'.format(str(migration)))

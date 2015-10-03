@@ -7,8 +7,10 @@ To use add this to settings.local:
 """
 
 import os
+import copy
 import json
 
+from scrapi.util import json_without_bytes
 from scrapi.processing.base import BaseProcessor
 
 
@@ -16,17 +18,23 @@ class StorageProcessor(BaseProcessor):
     NAME = 'storage'
 
     def process_raw(self, raw):
-        filename = 'archive/{}/{}/raw.{}'.format(raw['source'], raw['docID'], raw['filetype'])
-        if not os.path.exists(os.path.dirname(filename)):
-            os.makedirs(os.path.dirname(filename))
+        new_attrs = copy.deepcopy(raw.attributes)
+        if new_attrs.get('versions'):
+            new_attrs['versions'] = map(str, new_attrs['versions'])
 
-        with open(filename, 'w') as f:
-            f.write(json.dumps(raw.attributes, indent=4))
+        self.write(raw['source'], raw['docID'], 'raw', new_attrs)
 
     def process_normalized(self, raw, normalized):
-        filename = 'archive/{}/{}/normalized.json'.format(raw['source'], raw['docID'], raw['filetype'])
-        if not os.path.exists(os.path.dirname(filename)):
-            os.makedirs(os.path.dirname(filename))
+        self.write(raw['source'], raw['docID'], 'normalized', normalized.attributes)
 
-        with open(filename, 'w') as f:
-            f.write(json.dumps(normalized.attributes, indent=4))
+    def write(self, source, doc_id, filename, content):
+        filepath = 'archive/{}/{}/{}.json'.format(source, doc_id, filename)
+
+        if not os.path.exists(os.path.dirname(filepath)):
+            os.makedirs(os.path.dirname(filepath))
+
+        with open(filepath, 'w') as f:
+            f.write(json.dumps(json_without_bytes(content), indent=4))
+
+    def documents(self, *sources):
+        raise NotImplementedError

@@ -1,12 +1,43 @@
 from __future__ import unicode_literals
 
-import httpretty
+import mock
+import pytest
 from datetime import date
 
+from scrapi import requests
 from scrapi.base import OAIHarvester
 from scrapi.linter import RawDocument
 
 from .utils import TEST_OAI_DOC
+
+
+request_url = 'http://validOAI.edu/?sonofaplumber'
+
+@pytest.fixture(autouse=True)
+def mock_maybe_load_response(monkeypatch):
+    mock_mlr = mock.Mock()
+    mock_mlr.return_value = requests.HarvesterResponse(
+        ok=True,
+        method='get',
+        url=request_url.lower(),
+        content=TEST_OAI_DOC,
+    )
+    mock_save = lambda x: x
+
+    monkeypatch.setattr(requests, '_maybe_load_response', mock_mlr)
+    monkeypatch.setattr(requests.HarvesterResponse, 'save', mock_save)
+
+
+@pytest.fixture(autouse=True)
+def mock_requests(monkeypatch):
+    mock_req = mock.Mock()
+    monkeypatch.setattr(requests, 'requests', mock_req)
+    return mock_req
+
+
+@pytest.fixture(autouse=True)
+def mock_record_transactions(monkeypatch):
+    monkeypatch.setattr(requests.settings, 'RECORD_HTTP_TRANSACTIONS', True)
 
 
 class TestHarvester(OAIHarvester):
@@ -15,23 +46,16 @@ class TestHarvester(OAIHarvester):
     short_name = 'test'
     url = 'test'
     property_list = ['type', 'source', 'publisher', 'format', 'date']
+    verify = True
 
-    @httpretty.activate
     def harvest(self, start_date=None, end_date=None):
-
-        start_date = date(2015, 03, 14)
-        end_date = date(2015, 03, 16)
-
-        request_url = 'http://validAI.edu/?from={}&to={}'.format(start_date, end_date)
-
-        httpretty.register_uri(httpretty.GET, request_url,
-                               body=TEST_OAI_DOC,
-                               content_type="application/XML")
+        start_date = date(2015, 3, 14)
+        end_date = date(2015, 3, 16)
 
         records = self.get_records(request_url, start_date, end_date)
 
         return [RawDocument({
-            'doc': str(TEST_OAI_DOC),
+            'doc': TEST_OAI_DOC,
             'source': 'test',
             'filetype': 'XML',
             'docID': "1"

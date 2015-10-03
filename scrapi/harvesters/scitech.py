@@ -6,9 +6,10 @@ Example API query: http://www.osti.gov/scitech/scitechxml?EntryDateFrom=02%2F02%
 
 from __future__ import unicode_literals
 
-from lxml import etree
-from dateutil.parser import *
 from datetime import date, timedelta
+
+import six
+from lxml import etree
 
 from scrapi import requests
 from scrapi import settings
@@ -51,7 +52,7 @@ class SciTechHarvester(XMLHarvester):
                 'source': self.short_name,
                 'filetype': self.file_format,
                 'doc': etree.tostring(record),
-                'docID': record.xpath('dc:ostiId/node()', namespaces=self.namespaces)[0].decode('utf-8'),
+                'docID': six.u(record.xpath('dc:ostiId/node()', namespaces=self.namespaces)[0]),
             })
             for record in self._fetch_records(start_date, end_date)
         ]
@@ -66,8 +67,8 @@ class SciTechHarvester(XMLHarvester):
         while morepages:
             resp = requests.get(self.base_url, params={
                 'page': page,
-                'EntryDateTo': format_date_with_slashes(start_date),
-                'EntryDateFrom': format_date_with_slashes(end_date),
+                'EntryDateTo': format_date_with_slashes(end_date),
+                'EntryDateFrom': format_date_with_slashes(start_date),
             })
 
             xml = etree.XML(resp.content)

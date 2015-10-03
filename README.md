@@ -1,24 +1,25 @@
 scrapi
 ======
 
-```master``` build status: [![Build Status](https://travis-ci.org/fabianvf/scrapi.svg?branch=master)](https://travis-ci.org/fabianvf/scrapi)
+```master``` build status: [![Build Status](https://travis-ci.org/CenterForOpenScience/scrapi.svg?branch=master)](https://travis-ci.org/CenterForOpenScience/scrapi)
 
 
-```develop``` build status: [![Build Status](https://travis-ci.org/fabianvf/scrapi.svg?branch=develop)](https://travis-ci.org/fabianvf/scrapi)
+```develop``` build status: [![Build Status](https://travis-ci.org/CenterForOpenScience/scrapi.svg?branch=develop)](https://travis-ci.org/CenterForOpenScience/scrapi)
 
 
-[![Coverage Status](https://coveralls.io/repos/fabianvf/scrapi/badge.svg?branch=develop)](https://coveralls.io/r/fabianvf/scrapi?branch=develop)
-[![Code Climate](https://codeclimate.com/github/fabianvf/scrapi/badges/gpa.svg)](https://codeclimate.com/github/fabianvf/scrapi)
+[![Coverage Status](https://coveralls.io/repos/CenterForOpenScience/scrapi/badge.svg?branch=develop)](https://coveralls.io/r/CenterForOpenScience/scrapi?branch=develop)
+[![Code Climate](https://codeclimate.com/github/CenterForOpenScience/scrapi/badges/gpa.svg)](https://codeclimate.com/github/CenterForOpenScience/scrapi)
 
 ## Getting started
 
 - To run absolutely everyting, you will need to:
-    - Install requirements.
+    - Install requirements
     - Install Elasticsearch
-    - Install Cassandra
     - Install harvesters
+    - Install Cassandra, or Postgres, or both (optional)
     - Install rabbitmq (optional)
-- To only run harvesters locally, you do not have to install rabbitmq
+- To only run harvesters locally, you do not have to install 
+- Both Cassandra and Postgres aren't really necessary, you can choose which one you'd like, or use both. If you install neither, you can use local storage instead. In your settings, you'll specify a CANONICAL_PROCESSOR, just make sure that one is installed.
 
 
 ### Requirements
@@ -35,20 +36,56 @@ $ pip install -r dev-requirements.txt
 
 This will also install the core requirements like normal.
 
-### Installing Cassandra and Elasticsearch
-_note: JDK 7 must be installed for Cassandra and Elasticsearch to run_
+### Installing Elasticsearch
 
-_note: As long as you don't specify Cassandra or Elasticsearch and set RECORD_HTTP_TRANSACTIONS to ```False``` in your local.py, you shouldn't need to have them installed to get at least basic functionality working_
+Elasticsearch is required only if "elasticsearch" is specified in your settings, or if RECORD_HTTP_TRANSACTIONS is set to ```True```.
+
+_Note: Elasticsearch requires JDK 7._
+
+#### Mac OSX
+
+```bash
+$ brew install elasticsearch
+```
+
+#### Ubuntu
+
+1. Download and install the Public Signing Key.
+   ```bash
+   $ wget -qO - https://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
+   ```
+
+2. Add the ElasticSearch repository to yout /etc/apt/sources.list.
+   ```bash
+   $ sudo add-apt-repository "deb http://packages.elasticsearch.org/elasticsearch/1.4/debian stable main"
+   ```
+
+3. Install the package
+   ```bash
+   $ sudo apt-get update
+   $ sudo apt-get install elasticsearch
+```
+
+#### Running
+
+```bash
+$ elasticsearch
+```
+
+### Installing Cassandra
+
+Cassandra is required only if "cassandra" is specified in your settings, or if RECORD_HTTP_TRANSACTIONS is set to ```True```.
+
+_Note: Cassandra requires JDK 7._
 
 #### Mac OSX
 
 ```bash
 $ brew install cassandra
-$ brew install elasticsearch
 ```
 
 #### Ubuntu
-##### Install Cassandra
+
 1. Check which version of Java is installed by running the following command:
    ```bash
    $ java -version
@@ -68,32 +105,15 @@ $ brew install elasticsearch
 4. Install the package.
    ```bash
    $ sudo apt-get update
-   $ sudo apt-get install dsc20=2.0.11-1 cassandra=2.0.11
+   $ sudo apt-get install cassandra
    ```
 
-##### Install ElasticSearch
-1. Download and install the Public Signing Key.
-   ```bash
-   $ wget -qO - https://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
-   ```
+#### Running
 
-2. Add the ElasticSearch repository to yout /etc/apt/sources.list.
-   ```bash
-   $ sudo add-apt-repository "deb http://packages.elasticsearch.org/elasticsearch/1.4/debian stable main"
-   ```
-
-3. Install the package
-   ```bash
-   $ sudo apt-get update
-   $ sudo apt-get install elasticsearch
-```
-
-
-__Now, just run__
 ```bash
 $ cassandra
-$ elasticsearch
 ```
+
 
 Or, if you'd like your cassandra session to be bound to your current session, run:
 ```bash
@@ -120,18 +140,33 @@ $ sudo apt-get install rabbitmq-server
 
 You will need to have a local copy of the settings. Copy local-dist.py into your own version of local.py -
 
-```
+```bash
 cp scrapi/settings/local-dist.py scrapi/settings/local.py
 ```
 
-If you installed Cassandra and Elasticsearch earlier, you will want add the following configuration to your local.py:
-```python
-RECORD_HTTP_TRANSACTIONS = True  # Only if cassandra is installed
+Copy over the api settings
 
-NORMALIZED_PROCESSING = ['cassandra', 'elasticsearch']
-RAW_PROCESSING = ['cassandra']
+```bash
+cp api/api/settings/local-dist.py api/api/settings/local.py
 ```
-Otherwise, you will want to make sure your local.py has the following configuration:
+
+If you installed Cassandra, Postgres and Elasticsearch earlier, you will want add something like the following configuration to your local.py, based on the databases you have:
+```python
+RECORD_HTTP_TRANSACTIONS = True  # Only if cassandra or postgres are installed
+
+RAW_PROCESSING = ['cassandra', 'postgres']
+NORMALIZED_PROCESSING = ['cassandra', 'postgres', 'elasticsearch']
+CANONICAL_PROCESSOR = 'postgres'
+RESPONSE_PROCESSOR = 'postgres'
+
+```
+For raw and normalized processing, add the databases you have installed. Only add elasticsearch to normalized processing, as it does not have a raw processing module.
+
+```RAW_PROCESSING``` and ```NORMALIZED_PROCESSING``` are both lists, so you can add as many processors as you wish. CANONICAL_PROCESSOR and RESPONSE_PROCESSOR both are single processors only.
+
+_note: Cassandra processing will soon be phased out, so we reccomend using postgres for your processing needs. Either one will work for now!
+
+If you'd like to use local storage, you will want to make sure your local.py has the following configuration:
 ```python
 RECORD_HTTP_TRANSACTIONS = False
 
@@ -142,11 +177,13 @@ This will save all harvested/normalized files to the directory ```archive/<sourc
 
 _note: Be careful with this, as if you harvest too many documents with the storage module enabled, you could start experiencing inode errors_
 
-If you'd like to be able to run all harvesters, you'll need to [register for a PLOS API key](http://api.plos.org/registration/).
+If you'd like to be able to run all harvesters, you'll need to [register for a PLOS API key](http://api.plos.org/registration/), a [Harvard Dataverse API Key(https://dataverse.harvard.edu/dataverseuser.xhtml?editMode=CREATE&redirectPage=%2Fdataverse.xhtml), and a [Springer API Key](https://dev.springer.com/signup).
 
-Add the following line to your local.py file:
+Add your API keys to the following line to your local.py file:
 ```
 PLOS_API_KEY = 'your-api-key-here'
+HARVARD_DATAVERSE_API_KEY = 'your-api-key-here'
+SPRINGER_KEY = 'your-api-key-here'
 ```
 
 ### Running the scheduler (optional)
@@ -179,12 +216,59 @@ or, just one with
 $ invoke harvester harvester-name
 ```
 
+For testing local development, running the ```mit``` harvester is recommended.
+
 Note: harvester-name is the same as the defined harvester "short name".
 
-Invove a harvester a certain number of days back with the ```--days``` argument. For example, to run a harvester 5 days in the past, run:
+Invoke a harvester for a certain start date with the ```--start``` or ```-s```argument. Invoke a harvester for a certain end date with the ```--end``` or ```-e```argument.
+
+For example, to run a harvester between the dates of March 14th and March 16th 2015, run:
 
 ```bash
-$ invoke harvester harvester-name --days=5
+$ invoke harvester harvester-name --start 2015-03-14 --end 2015-03-16
+```
+
+Either --start or --end can also be used on their own. Not supplying arguments will default to starting the number of days specified in ```settings.DAYS_BACK``` and ending on the current date.
+
+If --end is given with no --start, start will default to the number of days specified in ```settings.DAYS_BACK``` before the given end date.
+
+
+### Automated OAI PMH Harvester Creation
+Writing a harvester for inclusion with scrAPI?  If the provider makes their metadata available using the OAI-PMH standard, then [autooai](https://github.com/erinspace/autooai) is a utility that will do most of the work for you.
+
+
+### Working with the OSF
+
+To configure scrapi to work in a local OSF dev environment:
+
+1. Ensure `'elasticsearch'` is in the `NORMALIZED_PROCESSING` list in `scrapi/settings/local.py`
+1. Run at least one harvester
+1. Configure the `share_v2` alias
+1. Generate the provider map
+
+#### Aliases
+
+Multiple SHARE indices may be used by the OSF. By default, OSF uses the ```share_v2``` index. Activate this alias by running:
+
+```bash
+$ inv alias share share_v2
+```
+
+Note that aliases must be activated before the provider map is generated.
+
+#### Provider Map
+
+```bash
+$ inv alias share share_v2
+$ inv provider_map 
+```
+
+#### Delete the Elasticsearch index
+
+To remove both the ```share``` and ```share_v2``` indices from elasticsearch:
+
+```bash
+$ curl -XDELETE 'localhost:9200/share*'
 ```
 
 ### Testing
@@ -196,3 +280,22 @@ $ invoke test
 ```
 
 and all of the tests in the 'tests/' directory will be run.
+
+
+### Pitfalls
+
+#### Installing with anaconda
+If you're using anaconda on your system at all, using pip to install all requirements from scratch from requirements.txt and dev-requirements.txt results in an Import Error when invoking tests or harvesters.
+
+Example:
+
+ImportError: dlopen(/Users/username/.virtualenvs/scrapi2/lib/python2.7/site-packages/lxml/etree.so, 2): Library not loaded: libxml2.2.dylib
+  Referenced from: /Users/username/.virtualenvs/scrapi2/lib/python2.7/site-packages/lxml/etree.so
+  Reason: Incompatible library version: etree.so requires version 12.0.0 or later, but libxml2.2.dylib provides version 10.0.0
+
+To fix:
+- run ```pip uninstall lxml```
+- remove the anaconda/bin from your system path in your bash_profile
+- reinstall requirements as usual
+
+Answer found in [this stack overflow question and answer](http://stackoverflow.com/questions/23172384/lxml-runtime-error-reason-incompatible-library-version-etree-so-requires-vers)

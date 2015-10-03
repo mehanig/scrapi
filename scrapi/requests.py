@@ -8,55 +8,22 @@ import json
 import time
 import logging
 import functools
-from datetime import datetime
 
+import six
 import furl
 import requests
-from cassandra.cqlengine import columns, models
-from requests.structures import CaseInsensitiveDict
 
 from scrapi import events
-from scrapi import database
 from scrapi import settings
+from scrapi.processing import HarvesterResponse
+
 
 logger = logging.getLogger(__name__)
-logging.getLogger('cqlengine.cql').setLevel(logging.WARN)
-
-
-@database.register_model
-class HarvesterResponse(models.Model):
-    """A parody of requests.response but stored in cassandra
-    Should reflect all methods of a response object
-    Contains an additional field time_made, self-explanitory
-    """
-    __table_name__ = 'responses'
-
-    method = columns.Text(primary_key=True)
-    url = columns.Text(primary_key=True, required=True)
-
-    # Raw request data
-    ok = columns.Boolean()
-    content = columns.Bytes()
-    encoding = columns.Text()
-    headers_str = columns.Text()
-    status_code = columns.Integer()
-    time_made = columns.DateTime(default=datetime.now)
-
-    def json(self):
-        return json.loads(self.content)
-
-    @property
-    def headers(self):
-        return CaseInsensitiveDict(json.loads(self.headers_str))
-
-    @property
-    def text(self):
-        return self.content.decode('utf-8')
 
 
 def _maybe_load_response(method, url):
     try:
-        return HarvesterResponse.get(url=url, method=method)
+        return HarvesterResponse.get(url=url.lower(), method=method)
     except HarvesterResponse.DoesNotExist:
         return None
 
@@ -74,17 +41,19 @@ def record_or_load_response(method, url, throttle=None, force=False, params=None
     else:
         logger.info('Making request to "{}"'.format(url))
 
-    if throttle:
-        time.sleep(throttle)
+    maybe_sleep(throttle)
 
     response = requests.request(method, url, **kwargs)
 
     if not response.ok:
         events.log_to_sentry('Got non-ok response code.', url=url, method=method)
 
+    if isinstance(response.content, six.text_type):
+        response.content = response.content.encode('utf8')
+
     if not resp:
         return HarvesterResponse(
-            url=url,
+            url=url.lower(),
             method=method,
             ok=response.ok,
             content=response.content,
@@ -104,6 +73,12 @@ def record_or_load_response(method, url, throttle=None, force=False, params=None
     ).save()
 
 
+def maybe_sleep(sleepytime):
+    # exists so that this alone can be mocked in tests
+    if sleepytime:
+        time.sleep(sleepytime)
+
+
 def request(method, url, params=None, **kwargs):
     """Make a recorded request or get a record matching method and url
 
@@ -120,7 +95,10 @@ def request(method, url, params=None, **kwargs):
         return record_or_load_response(method, url, **kwargs)
 
     logger.info('Making request to "{}"'.format(url))
-    time.sleep(kwargs.pop('throttle', 0))
+    throttle = kwargs.pop('throttle', 0)
+    maybe_sleep(throttle)
+    # Need to prevent force from being passed to real requests module
+    kwargs.pop('force', None)
     return requests.request(method, url, **kwargs)
 
 

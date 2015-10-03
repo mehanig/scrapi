@@ -6,8 +6,10 @@ RECORD_HTTP_TRANSACTIONS = False
 
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
-RAW_PROCESSING = ['cassandra']
-NORMALIZED_PROCESSING = ['elasticsearch', 'cassandra']
+RAW_PROCESSING = ['cassandra', 'postgres']
+NORMALIZED_PROCESSING = ['elasticsearch', 'cassandra', 'postgres']
+RESPONSE_PROCESSOR = 'cassandra'
+CANONICAL_PROCESSOR = 'postgres'
 
 SENTRY_DSN = None
 
@@ -21,6 +23,8 @@ ELASTIC_TIMEOUT = 10
 ELASTIC_INDEX = 'share'
 
 PLOS_API_KEY = 'fakekey'
+HARVARD_DATAVERSE_API_KEY = 'anotherfakekey'
+SPRINGER_KEY = 'thisistotallyfakealso'
 
 disabled = ['stepic']
 

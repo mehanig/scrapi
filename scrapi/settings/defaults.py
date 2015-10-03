@@ -12,6 +12,8 @@ disabled = []
 RAW_PROCESSING = []
 NORMALIZED_PROCESSING = []
 
+FRONTEND_KEYS = None
+
 SENTRY_DSN = None
 
 USE_FLUENTD = False
@@ -20,3 +22,7 @@ FLUENTD_ARGS = {
 }
 
 DAYS_BACK = 2
+
+# Retrying Celery tasks
+CELERY_RETRY_DELAY = 30
+CELERY_MAX_RETRIES = 5

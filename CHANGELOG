@@ -2,6 +2,142 @@
 ChangeLog
 *********
 
+0.9.7 (2015-09-18)
+==================
+- Bugfixes for OAI url gathering
+
+0.9.6 (2015-09-17)
+==================
+- Elasticsearch now retries requests after connection errors
+- Calhoun harvester now ignores that the SSL cert is invalid
+- OAI url parser now terminates the regex capture after finding an invalid DOI
+character
+- harvester invoke task now puts the default start date as settings.DAYS_BACK
+days before the end date
+- scrapi.requests now exposes the requests.exceptions module
+- Update README.md with updated date information
+
+0.9.5 (2015-09-14)
+==================
+- Clinical Trials harvester now dumps lxml elements to dicionaries in
+	the otherProperties field
+
+0.9.4 (2015-09-10)
+==================
+- Biomedcentral harvester now filters out results from the future
+
+0.9.3 (2015-09-01)
+==================
+- Capture more uris from pubmedcentral harvester
+- Update favicons so that all favicons are .icos (fixes IE display bug)
+- Fix longname for Portland State University harvester
+
+0.9.2 (2015-09-01)
+==================
+- fix specification of canonicalUri requirements in schema
+- update harvesters to reflect change in specification
+
+0.9.1 (2015-09-01)
+==================
+- Document __repr__ no longer throw exceptions (allowing errors to be reported)
+
+0.9.0 (2015-08-27)
+==================
+- Update setup documentation
+- add harvesters:
+	- WHOAS at MBLWHOI Library
+	- The OAKTrust Digital Repository at Texas A&M
+	- DigitalCommons@PCOM
+	- PDXScholar
+	- ScholarsArchive@OSU
+- stricter date/time, email, uri validation
+- automated data cleaning (strip out optional values with no semantic information)
+- extraction of PDF links for OAI harvesters
+- more consistent date formatting
+- more consistent DOI extraction
+- fix URLs for auto generated OAI harvesters
+- OSF harvester now sorts by correct date
+
+0.8.4 (2015-08-21)
+==================
+- Fix url gathering for datacite harvester
+
+0.8.3 (2015-08-19)
+==================
+- Add funding information to the crossref harvester
+
+
+0.8.2 (2015-08-11)
+==================
+- Add harvester for Washington University Open Scholarship
+
+0.8.1 (2015-08-06)
+==================
+- Scitech harvester now uses the correct start and end dates
+
+0.8.0 (2015-07-28)
+==================
+- Add harvesters for Smithsonian Digital Repository, Hacettepe,
+	Harvard Dataverse, Cyberleninka, Howard University, Scholarworks Umass,
+	Inter-University Consortium for Political and Social Research
+- Python 3 support
+- Fix DOI harvesting for OAI harvesters
+- Fix OAI harvesters having their otherProperties overwritten when they
+	defined a new schema.
+- Fix resumption tokens in OAI harvesters
+- Fix date parsing for DOE schema harvesters
+- Stop JSON processor from swallowing exceptions
+- Update harvesters to make their schemas more closely match the spec
+
+0.7.6 (2015-07-10)
+==================
+- Fix language harvesting for DOE and OAI harvesters
+
+0.7.5 (2015-07-10)
+==================
+- Fix shareok harvester (SSL verification failures ignored)
+
+0.7.4 (2015-07-08)
+==================
+- Fix probabilistic test failures
+
+0.7.3 (2015-07-07)
+==================
+- Add Daily SSRN harvester
+
+0.7.2 (2015-06-30)
+==================
+- Make harvesters run monday-sunday by default
+
+0.7.1 (2015-06-15)
+==================
+- Base OAI schema now includes DOIs as object URIs
+- If a migration begins to fail due to cassandra connection errors, we now
+attempt to re-establish the connection
+
+
+0.7.0 (2015-06-12)
+==================
+- Add University of Delaware, Harvard Dash,
+	Data Dryad, and Iowa Research harvesters
+- Update skip logic for shareok
+- Rewrote cassandra models to partition data to make migrations more efficient
+- Added migration script for new models
+- Rewrote migrations to take advantage of celery
+- Added automatic malformed XML recovery
+
+
+0.6.6 (2015-06-08)
+==================
+- Fixed small bug in dryad where documents without URIs were created
+
+
+0.6.5 (2015-06-08)
+==================
+- Add harvard-dash, iowa research, and data dryad harvesters
+- Make migrations a little more resilient (with autoretries)
+- Fix a bug with introspection into function arguments for logging
+
 
 0.6.0 (2015-05-04)
 ==================

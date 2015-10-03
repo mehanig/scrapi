@@ -4,8 +4,6 @@ A CrossRef harvester for the SHARE project
 Example API request: http://api.crossref.org/v1/works?filter=from-pub-date:2015-02-02,until-pub-date:2015-02-02&rows=1000
 """
 
-
-## Harvester for the CrossRef metadata service
 from __future__ import unicode_literals
 
 import json
@@ -13,28 +11,51 @@ import logging
 
 from datetime import date, timedelta
 
+from six.moves import xrange
 from nameparser import HumanName
-from dateutil.parser import parse
 
 from scrapi import requests
 from scrapi import settings
 from scrapi.base import JSONHarvester
-from scrapi.base.helpers import build_properties
 from scrapi.linter.document import RawDocument
+from scrapi.base.helpers import build_properties, compose, datetime_formatter
 
 logger = logging.getLogger(__name__)
 
 
 def process_contributor(author, orcid):
     name = HumanName(author)
-    return {
+    ret = {
         'name': author,
         'givenName': name.first,
         'additionalName': name.middle,
         'familyName': name.last,
-        'email': '',
-        'sameAs': [orcid or '']
+        'sameAs': [orcid] if orcid else []
     }
+    return ret
+
+
+def process_sponsorships(funder):
+    sponsorships = []
+
+    for element in funder:
+        sponsorship = {}
+
+        if element.get('name'):
+            sponsorship['sponsor'] = {
+                'sponsorName': element['name']
+            }
+
+        if element.get('award'):
+            sponsorship['award'] = {
+                'awardName': ', '.join(element['award'])
+            }
+            if element.get('DOI'):
+                sponsorship['award']['awardIdentifier'] = 'http://dx.doi.org/{}'.format(element['DOI'])
+
+        sponsorships.append(sponsorship)
+
+    return sponsorships
 
 
 class CrossRefHarvester(JSONHarvester):
@@ -51,16 +72,17 @@ class CrossRefHarvester(JSONHarvester):
         return {
             'title': ('/title', lambda x: x[0] if x else ''),
             'description': ('/subtitle', lambda x: x[0] if (isinstance(x, list) and x) else x or ''),
-            'providerUpdatedDateTime': ('/issued/date-parts', lambda x: parse(' '.join([str(part) for part in x[0]])).date().isoformat().decode('utf-8')),
+            'providerUpdatedDateTime': ('/issued/date-parts', compose(datetime_formatter, lambda x: ' '.join([str(part) for part in x[0]]))),
             'uris': {
                 'canonicalUri': '/URL'
             },
-            'contributors': ('/author', lambda x: [
+            'contributors': ('/author', compose(lambda x: [
                 process_contributor(*[
                     '{} {}'.format(entry.get('given'), entry.get('family')),
                     entry.get('ORCID')
                 ]) for entry in x
-            ]),
+            ], lambda x: x or [])),
+            'sponsorships': ('/funder', lambda x: process_sponsorships(x) if x else []),
             'otherProperties': build_properties(
                 ('journalTitle', '/container-title'),
                 ('volume', '/volume'),
